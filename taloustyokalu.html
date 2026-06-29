@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talouskompassi — Henkilökohtainen taloustyökalu</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e1117;
+  --bg2: #161b25;
+  --bg3: #1e2535;
+  --card: #1a2132;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --accent: #4ade80;
+  --accent2: #60a5fa;
+  --accent3: #f97316;
+  --danger: #f87171;
+  --muted: #64748b;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #475569;
+  --gold: #fbbf24;
+  --purple: #a78bfa;
+  --teal: #2dd4bf;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font-head: 'DM Serif Display', serif;
+  --font-body: 'Sora', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+/* ── LAYOUT ── */
+.shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+.sidebar { background: var(--bg2); border-right: 1px solid var(--border); padding: 1.5rem 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.main { overflow-x: hidden; }
+
+/* ── SIDEBAR ── */
+.logo { padding: 0 1.25rem 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+.logo-mark { font-family: var(--font-head); font-size: 22px; color: var(--accent); letter-spacing: -0.5px; }
+.logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+.nav-section { padding: 0 0.75rem; margin-bottom: 0.5rem; }
+.nav-label { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; padding: 0 0.5rem; margin-bottom: 0.25rem; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: var(--radius-sm); cursor: pointer; color: var(--text2); font-size: 13px; transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: rgba(74,222,128,0.1); color: var(--accent); }
+.nav-icon { width: 16px; text-align: center; font-size: 14px; }
+.sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); margin-top: auto; font-size: 11px; color: var(--text3); }
+
+/* ── HEADER ── */
+.page-header { padding: 2rem 2rem 1rem; border-bottom: 1px solid var(--border); }
+.page-title { font-family: var(--font-head); font-size: 28px; color: var(--text); font-style: italic; }
+.page-subtitle { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+/* ── VIEWS ── */
+.view { display: none; padding: 1.5rem 2rem; }
+.view.active { display: block; }
+
+/* ── CARDS ── */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+.card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2); margin-bottom: 1rem; }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+.metric { background: var(--bg3); border-radius: var(--radius-sm); padding: 1rem; border: 1px solid var(--border); }
+.metric-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+.metric-value { font-size: 22px; font-family: var(--font-mono); font-weight: 500; }
+.metric-sub { font-size: 10px; color: var(--text3); margin-top: 3px; }
+.green { color: var(--accent); }
+.red { color: var(--danger); }
+.blue { color: var(--accent2); }
+.gold { color: var(--gold); }
+.purple { color: var(--purple); }
+.teal { color: var(--teal); }
+
+/* ── SECTION HEADER ── */
+.section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; margin-top: 1.5rem; }
+.section-head h2 { font-size: 15px; font-weight: 600; color: var(--text); }
+.pill { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+.pill-green { background: rgba(74,222,128,0.15); color: var(--accent); }
+.pill-blue { background: rgba(96,165,250,0.15); color: var(--accent2); }
+.pill-orange { background: rgba(249,115,22,0.15); color: var(--accent3); }
+.pill-red { background: rgba(248,113,113,0.15); color: var(--danger); }
+.pill-gold { background: rgba(251,191,36,0.15); color: var(--gold); }
+
+/* ── EXPENSE TABLE ── */
+.expense-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.expense-table th { text-align: left; padding: 6px 10px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); border-bottom: 1px solid var(--border); }
+.expense-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.expense-table tr:last-child td { border-bottom: none; }
+.expense-table tr:hover td { background: rgba(255,255,255,0.02); }
+.person-badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 500; }
+.badge-mika { background: rgba(96,165,250,0.15); color: var(--accent2); }
+.badge-partner { background: rgba(167,139,250,0.15); color: var(--purple); }
+.badge-yhteinen { background: rgba(45,212,191,0.15); color: var(--teal); }
+.badge-poika { background: rgba(251,191,36,0.15); color: var(--gold); }
+.editable { background: transparent; border: 1px solid transparent; border-radius: 4px; color: var(--text); font-family: var(--font-mono); font-size: 13px; width: 80px; text-align: right; padding: 2px 4px; }
+.editable:focus { border-color: var(--accent); outline: none; background: var(--bg3); }
+.category-header td { background: var(--bg3); font-weight: 600; font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ── SLIDERS ── */
+.slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.slider-label { font-size: 12px; color: var(--text2); min-width: 160px; }
+input[type=range] { flex: 1; accent-color: var(--accent); height: 4px; }
+.slider-val { font-family: var(--font-mono); font-size: 13px; font-weight: 500; min-width: 60px; text-align: right; }
+
+/* ── SCENARIO ── */
+.scenario-tabs { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+.scen-tab { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border2); background: none; color: var(--text2); font-size: 12px; cursor: pointer; font-family: var(--font-body); transition: all 0.15s; }
+.scen-tab.active { background: var(--accent); color: #0e1117; border-color: var(--accent); font-weight: 600; }
+
+/* ── CHART CONTAINERS ── */
+.chart-box { position: relative; width: 100%; }
+
+/* ── FOOD/KETO ── */
+.food-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.food-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.food-item:last-child { border-bottom: none; }
+.food-name { color: var(--text); }
+.food-meta { display: flex; gap: 12px; }
+.food-meta span { font-family: var(--font-mono); color: var(--text2); font-size: 11px; }
+.keto-score { display: flex; align-items: center; gap: 8px; }
+.keto-bar { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.keto-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+
+/* ── INPUT AREA ── */
+.input-area { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 1rem; font-family: var(--font-mono); font-size: 12px; width: 100%; color: var(--text); resize: vertical; min-height: 140px; }
+.input-area:focus { outline: none; border-color: var(--accent); }
+.btn { padding: 8px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg3); color: var(--text); font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+.btn:hover { background: var(--accent); color: #0e1117; border-color: var(--accent); }
+.btn-accent { background: var(--accent); color: #0e1117; border-color: var(--accent); font-weight: 600; }
+.btn-accent:hover { background: #22c55e; }
+
+/* ── SUMMARY ── */
+.summary-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.summary-item:last-child { border-bottom: none; }
+.summary-icon { font-size: 18px; min-width: 28px; text-align: center; margin-top: 2px; }
+.summary-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.summary-text strong { color: var(--text); }
+
+/* ── ALCO CALC ── */
+.alco-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.alco-item { background: var(--bg3); border-radius: var(--radius-sm); padding: 1rem; border: 1px solid var(--border); }
+.alco-name { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+.alco-controls { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.alco-controls input[type=number] { width: 50px; background: var(--bg2); border: 1px solid var(--border2); border-radius: 4px; color: var(--text); font-family: var(--font-mono); font-size: 13px; padding: 3px 6px; text-align: center; }
+.alco-result { font-size: 11px; color: var(--text3); }
+
+/* ── GROW / VILJELY ── */
+.grow-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.grow-item:last-child { border-bottom: none; }
+.grow-val { font-family: var(--font-mono); color: var(--accent); }
+
+/* ── TOGGLE SWITCH ── */
+.toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.toggle-row:last-child { border-bottom: none; }
+.switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider-sw { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg3); border-radius: 20px; transition: .3s; border: 1px solid var(--border2); }
+.slider-sw:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background: var(--text3); border-radius: 50%; transition: .3s; }
+input:checked + .slider-sw { background: var(--accent); border-color: var(--accent); }
+input:checked + .slider-sw:before { transform: translateX(16px); background: #0e1117; }
+
+/* ── PERSON FILTER ── */
+.filter-bar { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+.filter-btn { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border2); background: none; color: var(--text2); font-size: 12px; cursor: pointer; font-family: var(--font-body); transition: all 0.15s; }
+.filter-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(96,165,250,0.1); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position: fixed; left: -220px; z-index: 100; transition: left 0.3s; height: 100vh; }
+  .sidebar.open { left: 0; }
+  .food-grid { grid-template-columns: 1fr; }
+  .mobile-toggle { display: block !important; }
+  .view { padding: 1rem; }
+}
+.mobile-toggle { display: none; position: fixed; top: 1rem; right: 1rem; z-index: 200; }
+
+/* ── ANIMATE ── */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.view.active { animation: fadeUp 0.25s ease; }
+
+/* ── IMPORT AREA ── */
+.import-preview { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem; font-size: 11px; font-family: var(--font-mono); color: var(--text2); max-height: 200px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+.status-ok { color: var(--accent); }
+.status-err { color: var(--danger); }
+</style>
+</head>
+<body>
+
+<button class="mobile-toggle btn" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰ Valikko</button>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">Talouskompassi</div>
+    <div class="logo-sub">Henkilökohtainen taloustyökalu</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Näkymät</div>
+    <button class="nav-item active" onclick="showView('yhteenveto',this)"><span class="nav-icon">◉</span> Yhteenveto</button>
+    <button class="nav-item" onclick="showView('kulut',this)"><span class="nav-icon">⊟</span> Kulut & tulot</button>
+    <button class="nav-item" onclick="showView('skenaariot',this)"><span class="nav-icon">⊕</span> Skenaariot</button>
+    <button class="nav-item" onclick="showView('ruoka',this)"><span class="nav-icon">◈</span> Ruoka & keto</button>
+    <button class="nav-item" onclick="showView('alkokalorit',this)"><span class="nav-icon">◎</span> Alko & kalorit</button>
+    <button class="nav-item" onclick="showView('viljely',this)"><span class="nav-icon">❋</span> Oma viljely</button>
+    <button class="nav-item" onclick="showView('tuo',this)"><span class="nav-icon">⊞</span> Tuo tiedot</button>
+    <button class="nav-item" onclick="showView('loppukoonti',this)"><span class="nav-icon">★</span> Loppukoonti</button>
+  </div>
+
+  <div style="padding: 0 0.75rem; margin-top: 1.5rem;">
+    <div class="nav-label">Pikafilteri</div>
+    <div style="padding: 0.5rem 0.5rem; font-size: 12px; color: var(--text2);">Näytä henkilö:</div>
+    <button class="nav-item" onclick="filterPerson('kaikki')"><span class="nav-icon">◉</span> Kaikki</button>
+    <button class="nav-item" onclick="filterPerson('mika')"><span class="nav-icon badge-mika" style="border-radius:50%;width:10px;height:10px;display:inline-block;background:#60a5fa;font-size:0"> </span> Mika</button>
+    <button class="nav-item" onclick="filterPerson('partner')"><span class="nav-icon badge-partner" style="border-radius:50%;width:10px;height:10px;display:inline-block;background:#a78bfa;font-size:0"> </span> Partneri</button>
+    <button class="nav-item" onclick="filterPerson('yhteinen')"><span class="nav-icon badge-yhteinen" style="border-radius:50%;width:10px;height:10px;display:inline-block;background:#2dd4bf;font-size:0"> </span> Yhteinen</button>
+    <button class="nav-item" onclick="filterPerson('poika')"><span class="nav-icon" style="color:var(--gold)">★</span> Akseli</button>
+  </div>
+
+  <div class="sidebar-footer">v1.0 &copy; 2026 Talouskompassi<br>Kaikki laskelmat suuntaa-antavia.</div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+<div class="page-header">
+  <div class="page-title">Talouskompassi <em>— henkilökohtainen budjettityökalu</em></div>
+  <div class="page-subtitle">Kaikki talousluvut yhdessä näkymässä · Säädettävä · Skenaariot · Ruoka & hyvinvointi</div>
+</div>
+
+<!-- ══ YHTEENVETO ══ -->
+<div id="view-yhteenveto" class="view active">
+  <div class="metric-grid" id="metricGrid">
+    <div class="metric"><div class="metric-label">Tulot / kk</div><div class="metric-value green" id="m-tulot">3 700 €</div><div class="metric-sub">Metropolia + yritys</div></div>
+    <div class="metric"><div class="metric-label">Menot / kk</div><div class="metric-value red" id="m-menot">0 €</div><div class="metric-sub">kaikki kulut</div></div>
+    <div class="metric"><div class="metric-label">Jäljelle / kk</div><div class="metric-value" id="m-jaannos">0 €</div><div class="metric-sub">käytettävissä</div></div>
+    <div class="metric"><div class="metric-label">Mika henk.kulut</div><div class="metric-value blue" id="m-mika">0 €</div><div class="metric-sub">omat</div></div>
+    <div class="metric"><div class="metric-label">Jaettavat kulut</div><div class="metric-value teal" id="m-yht">0 €</div><div class="metric-sub">50/50 partnerin kanssa</div></div>
+    <div class="metric"><div class="metric-label">Akselin kulut</div><div class="metric-value gold" id="m-akseli">0 €</div><div class="metric-sub">sinun vastuullasi</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Kulujakauma</div>
+    <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+      <div class="chart-box" style="height:240px; flex:1; min-width:200px;"><canvas id="pieChart" role="img" aria-label="Kulujakauma piirakkana"></canvas></div>
+      <div class="chart-box" style="height:240px; flex:2; min-width:280px;"><canvas id="barChart" role="img" aria-label="Kulut kategorioittain"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Kassavirta kuukausittain (ennuste)</div>
+    <div class="chart-box" style="height:220px;"><canvas id="cashChart" role="img" aria-label="Kassavirta 12 kk"></canvas></div>
+  </div>
+</div>
+
+<!-- ══ KULUT ══ -->
+<div id="view-kulut" class="view">
+  <div class="filter-bar" id="personFilter">
+    <button class="filter-btn active" onclick="filterTable('kaikki',this)">Kaikki</button>
+    <button class="filter-btn" onclick="filterTable('mika',this)">Mika</button>
+    <button class="filter-btn" onclick="filterTable('partner',this)">Partneri</button>
+    <button class="filter-btn" onclick="filterTable('yhteinen',this)">Yhteinen</button>
+    <button class="filter-btn" onclick="filterTable('poika',this)">Akseli</button>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <div class="card-title" style="margin-bottom:0">Kulurakenne — kaikki erät</div>
+      <div style="font-size:11px;color:var(--text3)">Klikkaa summia muokataksesi</div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table class="expense-table" id="expenseTable">
+      <thead><tr><th>Kategoria</th><th>Kuvaus</th><th>Henkilö</th><th>€/kk</th><th>€/v</th><th>Mukana jakoon</th></tr></thead>
+      <tbody id="expenseBody"></tbody>
+    </table>
+    </div>
+    <div style="margin-top:1rem; display:flex; gap:1rem; flex-wrap:wrap;">
+      <button class="btn btn-accent" onclick="addRow()">+ Lisää rivi</button>
+      <button class="btn" onclick="recalc()">Laske uudelleen</button>
+      <button class="btn" onclick="exportCSV()">Vie CSV</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Tulot</div>
+    <table class="expense-table">
+      <thead><tr><th>Lähde</th><th>Henkilö</th><th>€/kk</th><th>Huomio</th></tr></thead>
+      <tbody id="incomeTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ SKENAARIOT ══ -->
+<div id="view-skenaariot" class="view">
+  <div class="scenario-tabs">
+    <button class="scen-tab active" onclick="loadScenario('nykytila',this)">Nykytila</button>
+    <button class="scen-tab" onclick="loadScenario('saasto',this)">Säästöskenaario</button>
+    <button class="scen-tab" onclick="loadScenario('laina',this)">Lainamuutos</button>
+    <button class="scen-tab" onclick="loadScenario('yritys',this)">Yrityskasvuスケ</button>
+    <button class="scen-tab" onclick="loadScenario('matka',this)">Matkakassa</button>
+  </div>
+
+  <div class="card" id="scenCard">
+    <div class="card-title" id="scenTitle">Nykytila</div>
+    <div id="scenSliders"></div>
+    <div class="metric-grid" style="margin-top:1rem;" id="scenMetrics"></div>
+    <div class="chart-box" style="height:200px; margin-top:1rem;"><canvas id="scenChart" role="img" aria-label="Skenaariovertailu"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Lainaturva vs. irtisanominen</div>
+    <div class="toggle-row"><span>Lainaturva (200 €/kk)</span><label class="switch"><input type="checkbox" id="loanProtToggle" checked onchange="recalc()"><span class="slider-sw"></span></label></div>
+    <div class="toggle-row"><span>Lainamaksun korotus</span><label class="switch"><input type="checkbox" id="loanIncToggle" onchange="recalc()"><span class="slider-sw"></span></label></div>
+    <div style="padding-top:8px;">
+      <div class="slider-row">
+        <span class="slider-label">Lainan kuukausierä (€)</span>
+        <input type="range" id="loanSlider" min="1200" max="2500" value="1600" step="50" oninput="recalc()">
+        <span class="slider-val" id="loanVal">1 600 €</span>
+      </div>
+    </div>
+    <div class="metric-grid" style="margin-top:0.5rem;">
+      <div class="metric"><div class="metric-label">Nykyinen laina + turva</div><div class="metric-value red" id="loanNow">1 800 €/kk</div></div>
+      <div class="metric"><div class="metric-label">Uusi erä (ilman turvaa)</div><div class="metric-value" id="loanNew">1 600 €/kk</div></div>
+      <div class="metric"><div class="metric-label">Säästö/kk</div><div class="metric-value green" id="loanSave">200 €</div></div>
+      <div class="metric"><div class="metric-label">Säästö/v</div><div class="metric-value green" id="loanSaveY">2 400 €</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px;">⚠ Lainaturvan irtisanominen voi olla perusteltua jos olet terve ja sinulla on säästöpuskuri. Kysy pankistasi ensin.</div>
+  </div>
+</div>
+
+<!-- ══ RUOKA & KETO ══ -->
+<div id="view-ruoka" class="view">
+  <div class="card">
+    <div class="card-title">Keto-lautasmalli — mukauta makrot</div>
+    <div class="slider-row"><span class="slider-label">Rasva (%)</span><input type="range" id="fatSlider" min="40" max="80" value="70" oninput="updateKeto()"><span class="slider-val" id="fatVal">70 %</span></div>
+    <div class="slider-row"><span class="slider-label">Proteiini (%)</span><input type="range" id="protSlider" min="15" max="40" value="25" oninput="updateKeto()"><span class="slider-val" id="protVal">25 %</span></div>
+    <div style="padding:8px 0 4px; font-size:11px; color:var(--text3);" id="ketoWarning"></div>
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label">Ketoosi-indeksi</div><div class="metric-value" id="ketoScore" style="color:var(--accent)">9/10</div></div>
+      <div class="metric"><div class="metric-label">Hiilihydraatit</div><div class="metric-value" id="carbVal" style="color:var(--danger)">5 %</div></div>
+      <div class="metric"><div class="metric-label">Päivä-kalorit (tavoite)</div><div class="metric-value blue">2 000 kcal</div></div>
+      <div class="metric"><div class="metric-label">Ruokakori/vko (2 hlö)</div><div class="metric-value gold" id="foodBudget">110 €</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Ruoka-aineet — valitse, laske kalorit & keto-arvo</div>
+    <div style="overflow-x:auto;">
+    <table class="expense-table" id="foodTable">
+      <thead><tr><th>Tuote</th><th>Luomu</th><th>Määrä/vko</th><th>yksikkö</th><th>€/vko</th><th>kcal/100g</th><th>Keto-arvo</th><th>Mukana</th></tr></thead>
+      <tbody id="foodBody"></tbody>
+    </table>
+    </div>
+    <div style="margin-top:1rem; display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+      <button class="btn btn-accent" onclick="addFoodRow()">+ Lisää tuote</button>
+      <div style="font-size:12px;color:var(--text2);">Valitut: <span id="foodTotal" class="green">0 €/vko</span> · <span id="foodKcal" class="blue">0 kcal/vrk/hlö</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ALKO & KALORIT ══ -->
+<div id="view-alkokalorit" class="view">
+  <div class="card">
+    <div class="card-title">Alkoholi- ja herkkukalorilaskuri</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:1rem;">Aseta viikkokulutus — työkalu laskee kalorit, eurot ja vuosivaikutuksen.</div>
+    <div class="alco-grid" id="alcoGrid"></div>
+    <div class="metric-grid" style="margin-top:1rem;">
+      <div class="metric"><div class="metric-label">Yhteensä €/vko</div><div class="metric-value red" id="alcoEurVko">0 €</div></div>
+      <div class="metric"><div class="metric-label">Yhteensä €/kk</div><div class="metric-value red" id="alcoEurKk">0 €</div></div>
+      <div class="metric"><div class="metric-label">Kalorit/vko</div><div class="metric-value gold" id="alcoKcal">0 kcal</div></div>
+      <div class="metric"><div class="metric-label">Säästö jos −50 %</div><div class="metric-value green" id="alcoSave">0 €/v</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Napostelu & herkut</div>
+    <div class="alco-grid" id="snackGrid"></div>
+    <div class="metric-grid" style="margin-top:1rem;">
+      <div class="metric"><div class="metric-label">Herkut €/vko</div><div class="metric-value red" id="snackEur">0 €</div></div>
+      <div class="metric"><div class="metric-label">Herkut kcal/vko</div><div class="metric-value gold" id="snackKcal">0 kcal</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Vuosivaikutus</div>
+    <div class="chart-box" style="height:200px;"><canvas id="alcoChart" role="img" aria-label="Alko ja herkut vuositasolla"></canvas></div>
+  </div>
+</div>
+
+<!-- ══ VILJELY ══ -->
+<div id="view-viljely" class="view">
+  <div class="card">
+    <div class="card-title">Oma viljely — puhtaan ruoan lisäarvo</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:1rem;">Merkitse mitä viljelet — työkalu laskee kauppahinnan, säästön ja ravintoarvon.</div>
+    <div id="growGrid"></div>
+    <div class="metric-grid" style="margin-top:1rem;">
+      <div class="metric"><div class="metric-label">Kauppahinta/v</div><div class="metric-value blue" id="growShop">0 €</div></div>
+      <div class="metric"><div class="metric-label">Arvioitu säästö/v</div><div class="metric-value green" id="growSave">0 €</div></div>
+      <div class="metric"><div class="metric-label">Puhtaan ruoan arvo</div><div class="metric-value gold" id="growPure">0 €</div><div class="metric-sub">luomuhintavertailu</div></div>
+      <div class="metric"><div class="metric-label">CO₂-jalanjälki −</div><div class="metric-value teal" id="growCO2">0 kg/v</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Viljelyehdotukset — aloita tästä</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+      🌿 <strong>Yrttejä</strong> (basilika, timjami, persilja, minttu) — parvekkeella tai ikkunalaudalla, nolla tilaa. Kauppahinta 2–4 €/ruukku, oman arvo 40–80 €/v.<br>
+      🥬 <strong>Lehtikaali & pinaatti</strong> — kasvaa varjossakin, satoisa, kaikki superfoodeista ketoilijalle.<br>
+      🥒 <strong>Kurkku & kesäkurpitsa</strong> — parvekkeella helppo, runsassatoinen, ketoon sopiva.<br>
+      🍅 <strong>Kirsikkatomaatit</strong> — aurinkoisella parvekkeella yksi pensas = 2–4 kg satoa.<br>
+      🌱 <strong>Idut</strong> (linssi, auringonkukka) — sisällä ympäri vuoden, valmis 3–5 päivässä, 0–10 € aloituskulut.<br>
+      🧄 <strong>Valkosipuli & sipuli</strong> — pieni laatikonsa, käyttöarvo korkea keittiössä.
+    </div>
+  </div>
+</div>
+
+<!-- ══ TUO ══ -->
+<div id="view-tuo" class="view">
+  <div class="card">
+    <div class="card-title">Tuo tiliottotapahtumat</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:1rem;">
+      Liitä tiliottosi CSV tai teksti alla olevaan kenttään. Formaatti: <code style="color:var(--accent)">pvm;nimi;summa</code> per rivi. Voit myös kirjoittaa yksittäisiä rivejä.
+    </div>
+    <textarea class="input-area" id="importArea" placeholder="2026-04-13;Alepa Havukoski;-5.89&#10;2026-04-10;ISS Ravintolapalvelut;-13.80&#10;2026-04-03;VIPPS MOBILEPAY AS;500.00&#10;..."></textarea>
+    <div style="display:flex;gap:8px;margin-top:0.75rem;flex-wrap:wrap;">
+      <button class="btn btn-accent" onclick="importData()">Analysoi tiedot</button>
+      <button class="btn" onclick="clearImport()">Tyhjennä</button>
+    </div>
+    <div id="importStatus" style="margin-top:0.75rem; font-size:12px;"></div>
+  </div>
+  <div class="card" id="importResultCard" style="display:none;">
+    <div class="card-title">Analyysitulos</div>
+    <div id="importResult"></div>
+  </div>
+</div>
+
+<!-- ══ LOPPUKOONTI ══ -->
+<div id="view-loppukoonti" class="view">
+  <div class="card">
+    <div class="card-title">Loppukoonti — tilannekuva</div>
+    <div id="summaryItems"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Toimenpideohjelma — seuraavat 90 päivää</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.8;" id="actionPlan"></div>
+  </div>
+  <div class="metric-grid" id="summaryMetrics" style="margin-top:0;"></div>
+</div>
+
+</main>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATA MODEL
+// ═══════════════════════════════════════════════════
+const state = {
+  income: [
+    { source: 'Metropolia AMK (opintotuki/palkka)', person: 'mika', monthly: 3700 },
+    { source: 'Yritys (alihankinta, muotoilu)', person: 'mika', monthly: 83, note: '~1 000 €/v' },
+    { source: 'Partneri (arvio)', person: 'partner', monthly: 2500, note: 'syötä oma luku' },
+  ],
+  expenses: [
+    // ASUMINEN
+    { cat: 'Asuminen', desc: 'Asuntolaina', person: 'mika', monthly: 1600, inSplit: false },
+    { cat: 'Asuminen', desc: 'Lainaturva', person: 'mika', monthly: 200, inSplit: false, toggle: 'loanProt' },
+    // UTILITIES
+    { cat: 'Sähkö & Utilities', desc: 'Vantaan Energia Sähköverkot', person: 'yhteinen', monthly: 46, inSplit: true },
+    { cat: 'Sähkö & Utilities', desc: 'Helen Oy', person: 'mika', monthly: 34, inSplit: false },
+    { cat: 'Sähkö & Utilities', desc: 'Pohjois-Karjalan Sähkö', person: 'mika', monthly: 40, inSplit: false },
+    // HSY/HSL
+    { cat: 'HSY / Vesi & jäte', desc: 'HSY ympäristöpalvelut', person: 'yhteinen', monthly: 46, inSplit: true },
+    // PUHELIN & NET
+    { cat: 'Puhelin & Internet', desc: 'Puhelinliittymä – Mika', person: 'mika', monthly: 25, inSplit: false },
+    { cat: 'Puhelin & Internet', desc: 'Puhelinliittymä – Partneri', person: 'partner', monthly: 25, inSplit: false },
+    { cat: 'Puhelin & Internet', desc: 'Valokuitu internet', person: 'yhteinen', monthly: 35, inSplit: true },
+    // VAKUUTUKSET
+    { cat: 'Vakuutukset', desc: 'Fennia Henkivakuutus', person: 'mika', monthly: 44, inSplit: false },
+    { cat: 'Vakuutukset', desc: 'Pohjantähti', person: 'mika', monthly: 106, inSplit: false },
+    { cat: 'Vakuutukset', desc: 'Lähitapiola', person: 'mika', monthly: 112, inSplit: false },
+    // PANKKI
+    { cat: 'Pankki & Lainat', desc: 'Nordea pankkikulut', person: 'mika', monthly: 75, inSplit: false },
+    { cat: 'Pankki & Lainat', desc: 'Klarna osamaksu', person: 'mika', monthly: 32, inSplit: false },
+    // RUOKA
+    { cat: 'Ruoka – Mika', desc: 'Alepa Havukoski (pääasiallinen)', person: 'mika', monthly: 95, inSplit: false },
+    { cat: 'Ruoka – Yhteinen', desc: 'K-Citymarket & K-Market', person: 'yhteinen', monthly: 130, inSplit: true },
+    { cat: 'Ruoka – Yhteinen', desc: 'Alepa Päivä (yhteinen)', person: 'yhteinen', monthly: 80, inSplit: true },
+    { cat: 'Ruoka – Yhteinen', desc: 'Lidl', person: 'yhteinen', monthly: 30, inSplit: true },
+    // ISS LOUNAS
+    { cat: 'Lounas (ISS)', desc: 'ISS Ravintolapalvelut (koulu)', person: 'mika', monthly: 115, inSplit: false },
+    // ALKO
+    { cat: 'Alko', desc: 'Alko ostot (Mika)', person: 'mika', monthly: 45, inSplit: false },
+    // LIIKUNTA
+    { cat: 'Liikunta & hyvinvointi', desc: 'Forever Helsinki kuntosali', person: 'mika', monthly: 14, inSplit: false },
+    // AKSELI
+    { cat: 'Akseli (poika)', desc: 'Ruoka & päivittäistav.', person: 'poika', monthly: 200, inSplit: false },
+    { cat: 'Akseli (poika)', desc: 'Muut tarpeet', person: 'poika', monthly: 100, inSplit: false },
+    // SATUNNAISET
+    { cat: 'Satunnaiset / muut', desc: 'Hankinnat (Tokmanni, Puuilo, jne.)', person: 'mika', monthly: 60, inSplit: false },
+    { cat: 'Satunnaiset / muut', desc: 'Muut ravintolat', person: 'mika', monthly: 42, inSplit: false },
+  ],
+  filter: 'kaikki'
+};
+
+// ═══════════════════════════════════════════════════
+// FOOD DATA
+// ═══════════════════════════════════════════════════
+const defaultFoods = [
+  { name:'Kananmunat (10 kpl)', organic:true,  qty:2,  unit:'pkt', price:4.5,  kcal:155, keto:10, checked:true  },
+  { name:'Lohi (filee)',        organic:false, qty:600,unit:'g',   price:9.0,  kcal:208, keto:10, checked:true  },
+  { name:'Naudan jauheliha',   organic:true,  qty:500,unit:'g',   price:8.5,  kcal:250, keto:9,  checked:true  },
+  { name:'Broileri (rintafilee)',organic:false,qty:500,unit:'g',   price:5.5,  kcal:165, keto:8,  checked:true  },
+  { name:'Voi (luomu)',        organic:true,  qty:250,unit:'g',   price:4.2,  kcal:717, keto:10, checked:true  },
+  { name:'Avokado',            organic:false, qty:4,  unit:'kpl', price:4.0,  kcal:160, keto:9,  checked:true  },
+  { name:'Parsakaali',         organic:false, qty:400,unit:'g',   price:2.5,  kcal:34,  keto:8,  checked:true  },
+  { name:'Pinaatti',           organic:false, qty:200,unit:'g',   price:1.8,  kcal:23,  keto:9,  checked:true  },
+  { name:'Kovajuusto',         organic:false, qty:200,unit:'g',   price:3.5,  kcal:400, keto:8,  checked:true  },
+  { name:'Oliiviöljy (ev)',    organic:false, qty:200,unit:'ml',  price:3.0,  kcal:884, keto:10, checked:true  },
+  { name:'Pähkinät (saksanp.)',organic:false, qty:100,unit:'g',   price:3.5,  kcal:654, keto:9,  checked:true  },
+  { name:'Kesäkurpitsa',       organic:false, qty:300,unit:'g',   price:1.5,  kcal:17,  keto:9,  checked:true  },
+  { name:'Sienet',             organic:false, qty:200,unit:'g',   price:2.0,  kcal:22,  keto:9,  checked:true  },
+  { name:'Leipä (ruisleipä)',  organic:false, qty:300,unit:'g',   price:2.5,  kcal:216, keto:2,  checked:false },
+  { name:'Pasta',              organic:false, qty:500,unit:'g',   price:1.5,  kcal:371, keto:1,  checked:false },
+  { name:'Riisi',              organic:false, qty:500,unit:'g',   price:1.5,  kcal:360, keto:1,  checked:false },
+];
+
+const alcoItems = [
+  { name:'Viini (pullo 750ml)', priceEach:14, kcalEach:625 },
+  { name:'Olut (0.5L)',         priceEach:3.5, kcalEach:215 },
+  { name:'Lonkero (0.33L)',     priceEach:3.0, kcalEach:150 },
+  { name:'Väkevät (20cl)',      priceEach:8.0, kcalEach:320 },
+  { name:'Siideri (0.5L)',      priceEach:3.0, kcalEach:185 },
+];
+
+const snackItems = [
+  { name:'Suklaapatukka',  priceEach:1.5, kcalEach:250 },
+  { name:'Sipsit (150g)',   priceEach:3.0, kcalEach:540 },
+  { name:'Jäätelö (annos)',priceEach:2.5, kcalEach:280 },
+  { name:'Kaakao (kuppi)', priceEach:1.0, kcalEach:180 },
+  { name:'Myslipatukka',   priceEach:1.2, kcalEach:200 },
+];
+
+const growItems = [
+  { name:'Yrttejä (basilika, timjami, persilja)', shopPrice:60, saveRatio:0.8, luomuMult:1.8, co2:1.2, checked:false },
+  { name:'Lehtikaali & pinaatti',               shopPrice:80, saveRatio:0.7, luomuMult:2.0, co2:2.0, checked:false },
+  { name:'Kurkku & kesäkurpitsa',               shopPrice:50, saveRatio:0.65, luomuMult:1.9, co2:1.5, checked:false },
+  { name:'Kirsikkatomaatit',                    shopPrice:70, saveRatio:0.6, luomuMult:2.1, co2:1.8, checked:false },
+  { name:'Idut (linssi, auringonkukka)',         shopPrice:40, saveRatio:0.9, luomuMult:2.5, co2:0.5, checked:false },
+  { name:'Valkosipuli & sipuli',                shopPrice:30, saveRatio:0.7, luomuMult:1.7, co2:0.8, checked:false },
+  { name:'Paprika',                             shopPrice:60, saveRatio:0.5, luomuMult:1.9, co2:1.0, checked:false },
+  { name:'Peruna',                              shopPrice:25, saveRatio:0.5, luomuMult:1.5, co2:2.0, checked:false },
+];
+
+// ═══════════════════════════════════════════════════
+// CHART INSTANCES
+// ═══════════════════════════════════════════════════
+let charts = {};
+function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+// ═══════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════
+function showView(id, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(id==='yhteenveto') buildSummaryCharts();
+  if(id==='kulut') buildExpenseTable();
+  if(id==='skenaariot') loadScenario('nykytila', document.querySelector('.scen-tab'));
+  if(id==='ruoka') buildFoodTable();
+  if(id==='alkokalorit') buildAlcoGrid();
+  if(id==='viljely') buildGrow();
+  if(id==='loppukoonti') buildSummaryPage();
+}
+
+// ═══════════════════════════════════════════════════
+// CALCULATIONS
+// ═══════════════════════════════════════════════════
+function totalIncome() { return state.income.reduce((s,r)=>s+r.monthly,0); }
+function totalExpenses(filter) {
+  return state.expenses.filter(e=>filter==='kaikki'||e.person===filter).reduce((s,e)=>s+e.monthly,0);
+}
+function calcMika() { return state.expenses.filter(e=>e.person==='mika').reduce((s,e)=>s+e.monthly,0); }
+function calcPartner() { return state.expenses.filter(e=>e.person==='partner').reduce((s,e)=>s+e.monthly,0); }
+function calcYhteinen() { return state.expenses.filter(e=>e.person==='yhteinen').reduce((s,e)=>s+e.monthly,0); }
+function calcPoika() { return state.expenses.filter(e=>e.person==='poika').reduce((s,e)=>s+e.monthly,0); }
+
+function recalc() {
+  const loanProt = document.getElementById('loanProtToggle');
+  if(loanProt) {
+    const lp = state.expenses.find(e=>e.desc==='Lainaturva');
+    if(lp) lp.monthly = loanProt.checked ? 200 : 0;
+    const loanSlider = document.getElementById('loanSlider');
+    if(loanSlider) {
+      const ln = state.expenses.find(e=>e.desc==='Asuntolaina');
+      if(ln) ln.monthly = parseInt(loanSlider.value);
+      document.getElementById('loanVal').textContent = parseInt(loanSlider.value).toLocaleString('fi-FI') + ' €';
+    }
+    const cur = (lp ? 200 : 0) + 1600;
+    const loanNew = parseInt(loanSlider ? loanSlider.value : 1600);
+    const newTotal = loanNew + (loanProt.checked ? 200 : 0);
+    const save = 1800 - newTotal;
+    document.getElementById('loanNow').textContent = '1 800 €/kk';
+    document.getElementById('loanNew').textContent = newTotal.toLocaleString('fi-FI') + ' €/kk';
+    document.getElementById('loanSave').textContent = save.toLocaleString('fi-FI') + ' €';
+    document.getElementById('loanSaveY').textContent = (save*12).toLocaleString('fi-FI') + ' €';
+  }
+  updateMetrics();
+}
+
+function updateMetrics() {
+  const inc = totalIncome();
+  const exp = totalExpenses('kaikki');
+  const jaan = inc - exp;
+  document.getElementById('m-tulot').textContent = inc.toLocaleString('fi-FI') + ' €';
+  document.getElementById('m-menot').textContent = exp.toLocaleString('fi-FI') + ' €';
+  const jEl = document.getElementById('m-jaannos');
+  jEl.textContent = jaan.toLocaleString('fi-FI') + ' €';
+  jEl.className = 'metric-value ' + (jaan>=0?'green':'red');
+  document.getElementById('m-mika').textContent = calcMika().toLocaleString('fi-FI') + ' €';
+  document.getElementById('m-yht').textContent = calcYhteinen().toLocaleString('fi-FI') + ' €';
+  document.getElementById('m-akseli').textContent = calcPoika().toLocaleString('fi-FI') + ' €';
+}
+
+// ═══════════════════════════════════════════════════
+// EXPENSE TABLE
+// ═══════════════════════════════════════════════════
+function buildExpenseTable(filter) {
+  filter = filter || state.filter;
+  const tbody = document.getElementById('expenseBody');
+  tbody.innerHTML = '';
+  let lastCat = '';
+  const filtered = state.expenses.filter(e=>filter==='kaikki'||e.person===filter);
+
+  filtered.forEach((e,i)=>{
+    if(e.cat !== lastCat) {
+      const hdr = document.createElement('tr');
+      hdr.className = 'category-header';
+      hdr.innerHTML = `<td colspan="6">${e.cat}</td>`;
+      tbody.appendChild(hdr);
+      lastCat = e.cat;
+    }
+    const tr = document.createElement('tr');
+    const personClass = {mika:'badge-mika',partner:'badge-partner',yhteinen:'badge-yhteinen',poika:'badge-poika'}[e.person]||'';
+    const personLabel = {mika:'Mika',partner:'Partneri',yhteinen:'Yhteinen',poika:'Akseli'}[e.person]||e.person;
+    tr.innerHTML = `<td></td>
+      <td>${e.desc}</td>
+      <td><span class="person-badge ${personClass}">${personLabel}</span></td>
+      <td style="text-align:right;"><input class="editable" type="number" value="${e.monthly}" onchange="state.expenses[${state.expenses.indexOf(e)}].monthly=parseFloat(this.value)||0;recalc();updateMetrics();"></td>
+      <td style="text-align:right;font-family:var(--font-mono);color:var(--text2);">${(e.monthly*12).toLocaleString('fi-FI')} €</td>
+      <td style="text-align:center;"><input type="checkbox" ${e.inSplit?'checked':''} onchange="state.expenses[${state.expenses.indexOf(e)}].inSplit=this.checked" style="accent-color:var(--teal)"></td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Income table
+  const itbody = document.getElementById('incomeTbody');
+  itbody.innerHTML = '';
+  state.income.forEach((inc,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${inc.source}</td>
+      <td><span class="person-badge badge-mika">${{mika:'Mika',partner:'Partneri'}[inc.person]||inc.person}</span></td>
+      <td style="text-align:right;"><input class="editable" type="number" value="${inc.monthly}" onchange="state.income[${i}].monthly=parseFloat(this.value)||0;recalc();updateMetrics();"></td>
+      <td style="color:var(--text3);font-size:11px;">${inc.note||''}</td>`;
+    itbody.appendChild(tr);
+  });
+}
+
+function addRow() {
+  state.expenses.push({ cat:'Muu', desc:'Uusi kulu', person:'mika', monthly:0, inSplit:false });
+  buildExpenseTable();
+}
+
+function filterTable(f, btn) {
+  state.filter = f;
+  document.querySelectorAll('#personFilter .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildExpenseTable(f);
+}
+
+function filterPerson(f) {
+  state.filter = f;
+  buildExpenseTable(f);
+  showView('kulut', null);
+}
+
+function exportCSV() {
+  let csv = 'Kategoria,Kuvaus,Henkilö,€/kk,€/v\n';
+  state.expenses.forEach(e=>{
+    csv += `"${e.cat}","${e.desc}","${e.person}",${e.monthly},${e.monthly*12}\n`;
+  });
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'talouskompassi-kulut.csv';
+  a.click();
+}
+
+// ═══════════════════════════════════════════════════
+// SUMMARY CHARTS
+// ═══════════════════════════════════════════════════
+function buildSummaryCharts() {
+  updateMetrics();
+
+  const cats = {};
+  state.expenses.forEach(e=>{ cats[e.cat]=(cats[e.cat]||0)+e.monthly; });
+  const labels = Object.keys(cats);
+  const data = Object.values(cats);
+  const palette = ['#60a5fa','#f87171','#4ade80','#fbbf24','#a78bfa','#2dd4bf','#f97316','#e879f9','#94a3b8','#34d399'];
+
+  destroyChart('pie'); destroyChart('bar'); destroyChart('cash');
+
+  charts['pie'] = new Chart(document.getElementById('pieChart'),{
+    type:'doughnut',
+    data:{ labels, datasets:[{ data, backgroundColor:palette, borderWidth:1, borderColor:'#0e1117' }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(c)=>c.label+': '+c.raw.toLocaleString('fi-FI')+' €/kk' } } } }
+  });
+
+  charts['bar'] = new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{ labels, datasets:[{ data, backgroundColor:palette, borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(c)=>c.raw.toLocaleString('fi-FI')+' €/kk' } } },
+      scales:{ x:{ ticks:{ color:'#64748b', callback:v=>v+' €' } }, y:{ ticks:{ color:'#94a3b8', font:{size:11} } } } }
+  });
+
+  const months = ['Huhti','Touko','Kesä','Heinä','Elo','Syys','Loka','Marras','Joulu','Tammi','Helmi','Maalisk'];
+  const inc = totalIncome(); const exp = totalExpenses('kaikki');
+  const incData = months.map(()=>inc);
+  const expData = months.map((m,i)=>exp + (i%3===2?200:0) + (i===6?500:0));
+  const cumData = months.map((_,i)=>months.slice(0,i+1).reduce((s,_,j)=>s+(incData[j]-expData[j]),0));
+
+  charts['cash'] = new Chart(document.getElementById('cashChart'),{
+    type:'bar',
+    data:{ labels:months, datasets:[
+      { type:'bar', label:'Tulot', data:incData, backgroundColor:'rgba(74,222,128,0.3)', borderColor:'#4ade80', borderWidth:1 },
+      { type:'bar', label:'Menot', data:expData, backgroundColor:'rgba(248,113,113,0.3)', borderColor:'#f87171', borderWidth:1 },
+      { type:'line', label:'Kumulat. jäännös', data:cumData, borderColor:'#60a5fa', borderWidth:2, pointRadius:3, fill:false, tension:0.3 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#94a3b8', font:{size:11} } } },
+      scales:{ x:{ ticks:{ color:'#64748b' } }, y:{ ticks:{ color:'#64748b', callback:v=>v.toLocaleString('fi-FI')+'€' } } } }
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// SKENAARIOT
+// ═══════════════════════════════════════════════════
+function loadScenario(id, btn) {
+  document.querySelectorAll('.scen-tab').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const sDiv = document.getElementById('scenSliders');
+  const mDiv = document.getElementById('scenMetrics');
+  const tEl = document.getElementById('scenTitle');
+  destroyChart('scen');
+
+  const base = { menot: totalExpenses('kaikki'), tulot: totalIncome() };
+
+  const scenarios = {
+    nykytila: { title:'Nykytila', sliders:[], calc:()=>({ menot:base.menot, tulot:base.tulot }) },
+    saasto: { title:'Säästöskenaario — mistä leikataan?',
+      sliders:[
+        { id:'alkoSc', label:'Alkon vähennys %', min:0, max:100, val:50 },
+        { id:'ravSc', label:'Ravintolat vähennys %', min:0, max:100, val:30 },
+        { id:'hankSc', label:'Hankinnat vähennys %', min:0, max:100, val:40 },
+      ],
+      calc:()=>{
+        const al = parseFloat(document.getElementById('alkoSc')?.value||50)/100;
+        const rv = parseFloat(document.getElementById('ravSc')?.value||30)/100;
+        const hn = parseFloat(document.getElementById('hankSc')?.value||40)/100;
+        return { menot: base.menot - 45*al - 42*rv - 60*hn, tulot: base.tulot };
+      }
+    },
+    laina: { title:'Lainamuutos — korotus tai lainaturvan poisto',
+      sliders:[
+        { id:'lainaSc', label:'Lainamaksun korotus €', min:0, max:500, val:0 },
+        { id:'turvaOff', label:'Lainaturva poistetaan (€ säästö)', min:0, max:200, val:200 },
+      ],
+      calc:()=>{
+        const add = parseFloat(document.getElementById('lainaSc')?.value||0);
+        const sav = parseFloat(document.getElementById('turvaOff')?.value||200);
+        return { menot: base.menot + add - sav, tulot: base.tulot };
+      }
+    },
+    yritys: { title:'Yritystoiminnan kasvu',
+      sliders:[
+        { id:'yritysLV', label:'Liikevaihto €/kk', min:500, max:10000, val:2083 },
+        { id:'yritysKate', label:'Kateprosentti %', min:5, max:60, val:4 },
+      ],
+      calc:()=>{
+        const lv = parseFloat(document.getElementById('yritysLV')?.value||2083);
+        const kate = parseFloat(document.getElementById('yritysKate')?.value||4)/100;
+        return { menot: base.menot, tulot: base.tulot - 83 + lv*kate };
+      }
+    },
+    matka: { title:'Matkakassa — kuinka nopeasti kertyy?',
+      sliders:[
+        { id:'matkaSave', label:'Kuukausisäästö €', min:0, max:500, val:150 },
+        { id:'matkaTarget', label:'Matkakassatavoite €', min:500, max:5000, val:2000 },
+      ],
+      calc:()=>{
+        const sv = parseFloat(document.getElementById('matkaSave')?.value||150);
+        const tg = parseFloat(document.getElementById('matkaTarget')?.value||2000);
+        return { menot: base.menot, tulot: base.tulot, extra:{save:sv, target:tg, months: Math.ceil(tg/sv)} };
+      }
+    }
+  };
+
+  const sc = scenarios[id];
+  tEl.textContent = sc.title;
+  sDiv.innerHTML = '';
+  sc.sliders.forEach(s=>{
+    sDiv.innerHTML += `<div class="slider-row">
+      <span class="slider-label">${s.label}</span>
+      <input type="range" id="${s.id}" min="${s.min}" max="${s.max}" value="${s.val}" oninput="updateScenario('${id}')">
+      <span class="slider-val" id="${s.id}_lbl">${s.val}</span>
+    </div>`;
+  });
+  updateScenario(id, sc, base);
+}
+
+function updateScenario(id) {
+  const base = { menot: totalExpenses('kaikki'), tulot: totalIncome() };
+  const scenarios = {
+    nykytila:()=>({ menot:base.menot, tulot:base.tulot }),
+    saasto:()=>{ const al=(document.getElementById('alkoSc')?.value||50)/100,rv=(document.getElementById('ravSc')?.value||30)/100,hn=(document.getElementById('hankSc')?.value||40)/100; return {menot:base.menot-45*al-42*rv-60*hn,tulot:base.tulot}; },
+    laina:()=>{ const add=+(document.getElementById('lainaSc')?.value||0),sav=+(document.getElementById('turvaOff')?.value||200); return {menot:base.menot+add-sav,tulot:base.tulot}; },
+    yritys:()=>{ const lv=+(document.getElementById('yritysLV')?.value||2083),kate=(document.getElementById('yritysKate')?.value||4)/100; return {menot:base.menot,tulot:base.tulot-83+lv*kate}; },
+    matka:()=>{ const sv=+(document.getElementById('matkaSave')?.value||150),tg=+(document.getElementById('matkaTarget')?.value||2000); return {menot:base.menot,tulot:base.tulot,extra:{save:sv,target:tg,months:Math.ceil(tg/sv)}}; }
+  };
+
+  document.querySelectorAll('[id$="_lbl"]').forEach(el=>{
+    const slId = el.id.replace('_lbl','');
+    const sl = document.getElementById(slId);
+    if(sl) el.textContent = parseFloat(sl.value).toLocaleString('fi-FI');
+  });
+
+  const res = (scenarios[id]||scenarios['nykytila'])();
+  const jaan = res.tulot - res.menot;
+  const mDiv = document.getElementById('scenMetrics');
+  let extra = '';
+  if(res.extra) {
+    extra = `<div class="metric"><div class="metric-label">Matkakassa kertyy</div><div class="metric-value green">${Math.ceil(res.extra.target/res.extra.save)} kk</div></div>
+    <div class="metric"><div class="metric-label">Vuodessa kertyy</div><div class="metric-value blue">${(res.extra.save*12).toLocaleString('fi-FI')} €</div></div>`;
+  }
+  mDiv.innerHTML = `
+    <div class="metric"><div class="metric-label">Tulot/kk</div><div class="metric-value green">${Math.round(res.tulot).toLocaleString('fi-FI')} €</div></div>
+    <div class="metric"><div class="metric-label">Menot/kk</div><div class="metric-value red">${Math.round(res.menot).toLocaleString('fi-FI')} €</div></div>
+    <div class="metric"><div class="metric-label">Jäännös/kk</div><div class="metric-value ${jaan>=0?'green':'red'}">${Math.round(jaan).toLocaleString('fi-FI')} €</div></div>
+    <div class="metric"><div class="metric-label">Jäännös/v</div><div class="metric-value ${jaan>=0?'green':'red'}">${Math.round(jaan*12).toLocaleString('fi-FI')} €</div></div>
+    ${extra}`;
+
+  destroyChart('scen');
+  charts['scen'] = new Chart(document.getElementById('scenChart'),{
+    type:'bar',
+    data:{ labels:['Tulot/kk','Menot/kk','Jäännös/kk'],
+      datasets:[{ data:[Math.round(res.tulot),Math.round(res.menot),Math.round(jaan)],
+        backgroundColor:['rgba(74,222,128,0.5)','rgba(248,113,113,0.5)',jaan>=0?'rgba(96,165,250,0.5)':'rgba(248,113,113,0.7)'],
+        borderColor:['#4ade80','#f87171',jaan>=0?'#60a5fa':'#f87171'], borderWidth:1 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ y:{ ticks:{ color:'#64748b', callback:v=>v+'€' } }, x:{ ticks:{ color:'#94a3b8' } } } }
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// FOOD TABLE
+// ═══════════════════════════════════════════════════
+function buildFoodTable() {
+  const tbody = document.getElementById('foodBody');
+  tbody.innerHTML = '';
+  defaultFoods.forEach((f,i)=>{
+    const tr = document.createElement('tr');
+    const ketoColor = f.keto>=9?'#4ade80':f.keto>=6?'#fbbf24':'#f87171';
+    tr.innerHTML = `<td>${f.name}</td>
+      <td style="text-align:center;">${f.organic?'<span style="color:var(--accent);font-size:12px;">✓ luomu</span>':''}</td>
+      <td style="text-align:right;"><input class="editable" type="number" value="${f.qty}" style="width:60px;" onchange="defaultFoods[${i}].qty=parseFloat(this.value)||0;updateFoodTotals()"></td>
+      <td style="color:var(--text3);">${f.unit}</td>
+      <td style="text-align:right;"><input class="editable" type="number" value="${f.price}" style="width:60px;" onchange="defaultFoods[${i}].price=parseFloat(this.value)||0;updateFoodTotals()"></td>
+      <td style="text-align:right;font-family:var(--font-mono);color:var(--text2);">${f.kcal}</td>
+      <td><div style="display:flex;align-items:center;gap:6px;"><div class="keto-bar" style="width:60px;"><div class="keto-fill" style="width:${f.keto*10}%;background:${ketoColor}"></div></div><span style="font-size:11px;color:${ketoColor};">${f.keto}/10</span></div></td>
+      <td style="text-align:center;"><input type="checkbox" ${f.checked?'checked':''} onchange="defaultFoods[${i}].checked=this.checked;updateFoodTotals()" style="accent-color:var(--accent)"></td>`;
+    tbody.appendChild(tr);
+  });
+  updateFoodTotals();
+  updateKeto();
+}
+
+function addFoodRow() {
+  defaultFoods.push({ name:'Uusi tuote', organic:false, qty:100, unit:'g', price:2.0, kcal:100, keto:5, checked:true });
+  buildFoodTable();
+}
+
+function updateFoodTotals() {
+  const sel = defaultFoods.filter(f=>f.checked);
+  const eur = sel.reduce((s,f)=>s+f.price,0);
+  const kcal = sel.reduce((s,f)=>s+(f.kcal*(f.qty/100))/7,0);
+  document.getElementById('foodTotal').textContent = (eur*2).toFixed(0) + ' €/vko (2 hlö)';
+  document.getElementById('foodKcal').textContent = Math.round(kcal) + ' kcal/vrk/hlö';
+  const budg = eur*2*4.3;
+  document.getElementById('foodBudget').textContent = Math.round(budg) + ' €/kk (2 hlö)';
+}
+
+function updateKeto() {
+  const fat = parseInt(document.getElementById('fatSlider')?.value||70);
+  const prot = parseInt(document.getElementById('protSlider')?.value||25);
+  const carb = 100 - fat - prot;
+  document.getElementById('fatVal').textContent = fat + ' %';
+  document.getElementById('protVal').textContent = prot + ' %';
+  document.getElementById('carbVal').textContent = carb + ' %';
+  const score = Math.max(1, Math.min(10, Math.round((fat/10) - (carb/5) + (prot>20?1:0))));
+  document.getElementById('ketoScore').textContent = score + '/10';
+  const warn = carb < 0 ? '⚠ Makrot eivät summaudu 100 % — tarkista arvot.' : carb <= 10 ? '✓ Ketoosivyöhykkeellä' : carb <= 20 ? '◑ Matala hiilihydraatti' : '✗ Liian paljon hiilihydraatteja ketoosia varten';
+  document.getElementById('ketoWarning').textContent = warn;
+  document.getElementById('ketoWarning').style.color = carb<=10?'var(--accent)':carb<=20?'var(--gold)':'var(--danger)';
+}
+
+// ═══════════════════════════════════════════════════
+// ALCO GRID
+// ═══════════════════════════════════════════════════
+function buildAlcoGrid() {
+  const ag = document.getElementById('alcoGrid');
+  ag.innerHTML = '';
+  alcoItems.forEach((a,i)=>{
+    ag.innerHTML += `<div class="alco-item">
+      <div class="alco-name">${a.name}</div>
+      <div class="alco-controls"><span style="font-size:11px;color:var(--text3);">kpl/vko</span>
+      <input type="number" id="alco_${i}" value="0" min="0" max="30" step="0.5" onchange="updateAlco()" style="background:var(--bg2);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--font-mono);font-size:13px;padding:3px 6px;text-align:center;width:60px;"></div>
+      <div class="alco-result" id="alco_res_${i}">0 € · 0 kcal</div>
+    </div>`;
+  });
+  const sg = document.getElementById('snackGrid');
+  sg.innerHTML = '';
+  snackItems.forEach((s,i)=>{
+    sg.innerHTML += `<div class="alco-item">
+      <div class="alco-name">${s.name}</div>
+      <div class="alco-controls"><span style="font-size:11px;color:var(--text3);">kpl/vko</span>
+      <input type="number" id="snack_${i}" value="0" min="0" max="20" onchange="updateAlco()" style="background:var(--bg2);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--font-mono);font-size:13px;padding:3px 6px;text-align:center;width:60px;"></div>
+      <div class="alco-result" id="snack_res_${i}">0 € · 0 kcal</div>
+    </div>`;
+  });
+  updateAlco();
+}
+
+function updateAlco() {
+  let totalEur=0, totalKcal=0;
+  alcoItems.forEach((a,i)=>{
+    const qty = parseFloat(document.getElementById('alco_'+i)?.value||0);
+    const eur = qty*a.priceEach, kcal = qty*a.kcalEach;
+    totalEur+=eur; totalKcal+=kcal;
+    const el = document.getElementById('alco_res_'+i);
+    if(el) el.textContent = eur.toFixed(1)+' €/vko · '+Math.round(kcal)+' kcal';
+  });
+  let snkEur=0, snkKcal=0;
+  snackItems.forEach((s,i)=>{
+    const qty=parseFloat(document.getElementById('snack_'+i)?.value||0);
+    snkEur+=qty*s.priceEach; snkKcal+=qty*s.kcalEach;
+    const el=document.getElementById('snack_res_'+i);
+    if(el) el.textContent=(qty*s.priceEach).toFixed(1)+' €/vko · '+Math.round(qty*s.kcalEach)+' kcal';
+  });
+  document.getElementById('alcoEurVko').textContent=totalEur.toFixed(1)+' €';
+  document.getElementById('alcoEurKk').textContent=(totalEur*4.3).toFixed(0)+' €';
+  document.getElementById('alcoKcal').textContent=Math.round(totalKcal)+' kcal';
+  document.getElementById('alcoSave').textContent=Math.round(totalEur*0.5*52)+' €/v';
+  document.getElementById('snackEur').textContent=snkEur.toFixed(1)+' €/vko';
+  document.getElementById('snackKcal').textContent=Math.round(snkKcal)+' kcal/vko';
+
+  destroyChart('alco');
+  charts['alco']=new Chart(document.getElementById('alcoChart'),{
+    type:'bar',
+    data:{ labels:['Alko €/v','Herkut €/v','Yhteensä €/v','Säästö −50% €/v'],
+      datasets:[{ data:[Math.round(totalEur*52),Math.round(snkEur*52),Math.round((totalEur+snkEur)*52),Math.round(totalEur*0.5*52)],
+        backgroundColor:['rgba(248,113,113,0.5)','rgba(251,191,36,0.5)','rgba(167,139,250,0.5)','rgba(74,222,128,0.5)'],
+        borderColor:['#f87171','#fbbf24','#a78bfa','#4ade80'],borderWidth:1 }] },
+    options:{ responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{ y:{ticks:{color:'#64748b',callback:v=>v+'€'}},x:{ticks:{color:'#94a3b8'}} } }
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// VILJELY
+// ═══════════════════════════════════════════════════
+function buildGrow() {
+  const g = document.getElementById('growGrid');
+  g.innerHTML = '';
+  growItems.forEach((item,i)=>{
+    g.innerHTML += `<div class="grow-item">
+      <span><input type="checkbox" ${item.checked?'checked':''} onchange="growItems[${i}].checked=this.checked;updateGrow()" style="accent-color:var(--accent);margin-right:8px;">${item.name}</span>
+      <div style="display:flex;gap:16px;align-items:center;">
+        <span style="font-size:11px;color:var(--text3);">kauppahinta/v: ${item.shopPrice}€</span>
+        <span class="grow-val">${item.checked?'✓ mukana':'–'}</span>
+      </div>
+    </div>`;
+  });
+  updateGrow();
+}
+
+function updateGrow() {
+  const sel = growItems.filter(i=>i.checked);
+  const shop = sel.reduce((s,i)=>s+i.shopPrice,0);
+  const save = sel.reduce((s,i)=>s+i.shopPrice*i.saveRatio,0);
+  const pure = sel.reduce((s,i)=>s+i.shopPrice*i.luomuMult*i.saveRatio,0);
+  const co2 = sel.reduce((s,i)=>s+i.co2,0);
+  document.getElementById('growShop').textContent = Math.round(shop)+' €';
+  document.getElementById('growSave').textContent = Math.round(save)+' €';
+  document.getElementById('growPure').textContent = Math.round(pure)+' €';
+  document.getElementById('growCO2').textContent = co2.toFixed(1)+' kg/v';
+}
+
+// ═══════════════════════════════════════════════════
+// IMPORT
+// ═══════════════════════════════════════════════════
+function importData() {
+  const raw = document.getElementById('importArea').value.trim();
+  if(!raw) { document.getElementById('importStatus').innerHTML='<span class="status-err">Tyhjä kenttä — liitä tiliote ensin.</span>'; return; }
+  const lines = raw.split('\n').filter(l=>l.trim());
+  const parsed = [];
+  const catRules = [
+    {re:/alepa|s-market|k-market|k-city|lidl|alko/i, cat:'Ruoka & market'},
+    {re:/iss ravintolapalvelu|lounas|compass|fazer ravintola/i, cat:'Lounas'},
+    {re:/helen|vantaan energia|pohjois-karjalan sähkö|valoo/i, cat:'Sähkö'},
+    {re:/hsy|jäte|vesi/i, cat:'Vesi & Jäte'},
+    {re:/fennia|pohjantähti|lähitapiola/i, cat:'Vakuutukset'},
+    {re:/nordea|klarna/i, cat:'Pankki'},
+    {re:/metropolia/i, cat:'TULO – Metropolia'},
+    {re:/vipps|paakkanen|ihanus mikko|ihanus ritva/i, cat:'TULO – Muut'},
+    {re:/verohallinto/i, cat:'TULO/MENO – Vero'},
+  ];
+  let totalIn=0, totalOut=0;
+  lines.forEach(l=>{
+    const parts = l.split(';');
+    if(parts.length<3) return;
+    const [date,name,amtStr]=parts;
+    const amt=parseFloat(amtStr.replace(',','.'));
+    if(isNaN(amt)) return;
+    let cat='Muut';
+    for(const r of catRules){ if(r.re.test(name)){ cat=r.cat; break; } }
+    parsed.push({date,name,amt,cat});
+    if(amt>0) totalIn+=amt; else totalOut+=Math.abs(amt);
+  });
+
+  const byCat={};
+  parsed.forEach(p=>{ byCat[p.cat]=(byCat[p.cat]||0)+p.amt; });
+
+  let html='<div style="display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">';
+  html+=`<div class="metric"><div class="metric-label">Rivejä tuotu</div><div class="metric-value blue">${parsed.length}</div></div>`;
+  html+=`<div class="metric"><div class="metric-label">Tulot yhteensä</div><div class="metric-value green">${totalIn.toFixed(0)} €</div></div>`;
+  html+=`<div class="metric"><div class="metric-label">Menot yhteensä</div><div class="metric-value red">${totalOut.toFixed(0)} €</div></div>`;
+  html+=`<div class="metric"><div class="metric-label">Tulos</div><div class="metric-value ${(totalIn-totalOut)>=0?'green':'red'}">${(totalIn-totalOut).toFixed(0)} €</div></div>`;
+  html+='</div><table class="expense-table"><thead><tr><th>Kategoria</th><th style="text-align:right">Summa €</th><th style="text-align:right">Osuus %</th></tr></thead><tbody>';
+  const total=Object.values(byCat).reduce((s,v)=>s+v,0);
+  Object.entries(byCat).sort((a,b)=>a[1]-b[1]).forEach(([cat,sum])=>{
+    const pct=total!==0?Math.abs(sum/total*100).toFixed(1):'0';
+    html+=`<tr><td>${cat}</td><td style="text-align:right;font-family:var(--font-mono);color:${sum>=0?'var(--accent)':'var(--danger)'}">${sum.toFixed(0)} €</td><td style="text-align:right;color:var(--text3)">${pct} %</td></tr>`;
+  });
+  html+='</tbody></table>';
+
+  document.getElementById('importResult').innerHTML=html;
+  document.getElementById('importResultCard').style.display='block';
+  document.getElementById('importStatus').innerHTML=`<span class="status-ok">✓ ${parsed.length} tapahtumaa analysoitu onnistuneesti.</span>`;
+}
+
+function clearImport() {
+  document.getElementById('importArea').value='';
+  document.getElementById('importStatus').innerHTML='';
+  document.getElementById('importResultCard').style.display='none';
+}
+
+// ═══════════════════════════════════════════════════
+// SUMMARY PAGE
+// ═══════════════════════════════════════════════════
+function buildSummaryPage() {
+  updateMetrics();
+  const inc=totalIncome(), exp=totalExpenses('kaikki'), jaan=inc-exp;
+  const mika=calcMika(), yht=calcYhteinen(), akseli=calcPoika();
+  const items=[
+    { icon:'💰', text:`<strong>Tulot yhteensä ${inc.toLocaleString('fi-FI')} €/kk</strong> (Metropolia ~3 700 €, yritys ~83 €, partneri ~2 500 €). Metropolia-tulo on vakaata mutta yrityksen kasvu voisi tuoda lisää.` },
+    { icon:'📉', text:`<strong>Menot yhteensä ${exp.toLocaleString('fi-FI')} €/kk</strong> — jäännös on <strong style="color:${jaan>=0?'var(--accent)':'var(--danger)'}">${jaan.toLocaleString('fi-FI')} €/kk</strong>. ${jaan<0?'Tili on alijäämäinen — kuluja on karsittava tai tuloja nostettava.':'Tilillä on pientä puskuria — hyvä alku.'}` },
+    { icon:'🏠', text:`<strong>Asuntolaina + lainaturva = 1 800 €/kk.</strong> Lainaturvan irtisanominen (200 €) tuo merkittävän säästön ilman suurta riskiä, jos olet terve. Lainan korottaminen vaatii pankkilaskelmat.` },
+    { icon:'👶', text:`<strong>Akseli (poika) ~${akseli.toLocaleString('fi-FI')} €/kk</strong> on sinun vastuullasi — se ei kuulu partnerin jakoon. Toukokuussa hän täyttää 18, mikä voi muuttaa esim. lapsilisää tai huoltosuhteen kirjausta.` },
+    { icon:'🤝', text:`<strong>Jaettavat yhteiset kulut ~${yht.toLocaleString('fi-FI')} €/kk</strong> (sähkö, internet, vesi, yhteinen ruoka). 50/50-jako vapauttaa kummallekin lisää omaa rahaa.` },
+    { icon:'🥑', text:`<strong>Keto-ruokavalio + oma viljely</strong> voi vähentää ruokamenoja 15–25 % samalla kun ravinnon laatu nousee. Luomuyrttejä parvekkeella, kasviksia sesongin mukaan.` },
+    { icon:'🍷', text:`<strong>Alko-kulu ~45 €/kk.</strong> 50 % vähennys = 270 €/v lisää matkakassaan. Alkoholin kalorit (tyypillisesti 600–2 000 kcal/vko) haittaavat myös keto-prosessia.` },
+    { icon:'✈️', text:`<strong>Matkakassa:</strong> 150 €/kk säästämällä 12 kuukaudessa kertyy 1 800 € — yksi laivaristeily, viikonloppu ulkomailla tai useampi paikallinen seikkailu.` },
+  ];
+
+  document.getElementById('summaryItems').innerHTML = items.map(i=>`<div class="summary-item"><div class="summary-icon">${i.icon}</div><div class="summary-text">${i.text}</div></div>`).join('');
+
+  document.getElementById('actionPlan').innerHTML = `
+    <strong style="color:var(--accent)">Viikko 1–2:</strong> Irtisano lainaturva pankissa. Laske vapautuva 200 €/kk säästötilille.<br>
+    <strong style="color:var(--accent)">Viikko 3–4:</strong> Sovi partnerin kanssa kulujen jako kirjallisesti. Avatkaa yhteinen tili yhteisille kuluille.<br>
+    <strong style="color:var(--gold)">Kuukausi 2:</strong> Testaa keto-ruokavalio 4 viikkoa. Ostoslista: munat, lohi, kasvikset, voi. Arvioi energiataso ja ruokakustannus.<br>
+    <strong style="color:var(--gold)">Kuukausi 2–3:</strong> Aloita parvekeyrttien kasvatus (€ 15–20 aloituskulut, säästö 40–80 €/v).<br>
+    <strong style="color:var(--purple)">Kuukausi 3:</strong> Kilpailuta vakuutukset — Pohjantähti + Lähitapiola yhteensä ~218 €/kk on korkea. Tarkista kattavuus vs. hinta.<br>
+    <strong style="color:var(--purple)">Kuukausi 3–6:</strong> Kasvata yrityksen liikevaihtoa — yksikin lisäasiakas muotoilualalla voi tuplata nykyisen 25 000 € lv:n.<br>
+    <strong style="color:var(--teal)">Jatkuva:</strong> Käytä tätä työkalua kuukausittain. Päivitä luvut, seuraa trendiä. Pienillä valinnoilla on iso vaikutus 12 kuukaudessa.`;
+
+  document.getElementById('summaryMetrics').innerHTML = `
+    <div class="metric"><div class="metric-label">Säästöpotentiaali</div><div class="metric-value green">~200–350 €/kk</div><div class="metric-sub">realistinen arvio</div></div>
+    <div class="metric"><div class="metric-label">Matkakassa / 12 kk</div><div class="metric-value blue">~1 800–3 000 €</div></div>
+    <div class="metric"><div class="metric-label">Vakuutussäästö jos kilp.</div><div class="metric-value gold">~50–100 €/kk</div></div>
+    <div class="metric"><div class="metric-label">Yritys 2× liikevaihto</div><div class="metric-value purple">+~1 000 €/v</div></div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', ()=>{
+  updateMetrics();
+  buildSummaryCharts();
+  buildExpenseTable();
+  buildAlcoGrid();
+  buildGrow();
+});
+</script>
+</body>
+</html>
