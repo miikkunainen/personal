@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edunvalvontavaltakirja — maksuton pohja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=Newsreader:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDEAE0;
+    --paper-raised:#F5F2E8;
+    --ink:#1B2A3D;
+    --ink-soft:#3E4C5E;
+    --gold:#9C7A3C;
+    --gold-text:#7A5A28;
+    --gold-soft:#C7A968;
+    --green:#2F5233;
+    --brick:#A23B2E;
+    --rule:#C9C2B2;
+    --rule-soft:#DCD7C9;
+    --font-display:'Fraunces', serif;
+    --font-body:'Source Serif 4', serif;
+    --font-ui:'Inter', sans-serif;
+    --font-scale:1;
+    --radius:2px;
+    --shadow:0 1px 2px rgba(27,42,61,0.06), 0 8px 24px -12px rgba(27,42,61,0.18);
+  }
+  [data-theme="ink"]{
+    --paper:#20262E;
+    --paper-raised:#262D37;
+    --ink:#EDEAE0;
+    --ink-soft:#B9B4A6;
+    --rule:#454C55;
+    --rule-soft:#3A4048;
+    --gold:#D6B571;
+    --gold-text:#D6B571;
+    --gold-soft:#E4CD97;
+    --green:#6FAE7A;
+    --brick:#E08477;
+  }
+  [data-theme="meri"]{
+    --paper:#EAF0EE;
+    --paper-raised:#F4F8F6;
+    --ink:#0F2E2A;
+    --ink-soft:#3C5A54;
+    --gold:#7C8F52;
+    --gold-text:#546334;
+    --gold-soft:#A3B379;
+    --rule:#C3D2CC;
+    --rule-soft:#DAE6E1;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:calc(16px * var(--font-scale));
+    line-height:1.6;
+    transition:background .3s ease, color .3s ease;
+  }
+  ::selection{background:var(--gold-soft); color:var(--ink);}
+  a{color:var(--ink);}
+  .skip-link{position:absolute; left:-999px; top:0; background:var(--ink); color:var(--paper); padding:.6em 1em; z-index:200;}
+  .skip-link:focus{left:8px; top:8px;}
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; gap:14px;
+    padding:10px 20px;
+    background:color-mix(in srgb, var(--paper) 88%, black 4%);
+    border-bottom:1px solid var(--rule);
+    backdrop-filter:blur(6px);
+    font-family:var(--font-ui);
+    flex-wrap:wrap;
+  }
+  .toolbar__brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:var(--font-display); font-weight:600; font-size:1rem;
+    margin-right:auto; white-space:nowrap;
+  }
+  .seal{width:34px; height:34px; flex:none;}
+  .seal circle.track{fill:none; stroke:var(--rule-soft); stroke-width:2;}
+  .seal circle.progress{
+    fill:none; stroke:var(--gold); stroke-width:2; stroke-linecap:round;
+    transform:rotate(-90deg); transform-origin:50% 50%;
+    transition:stroke-dashoffset .5s ease, stroke .3s ease;
+  }
+  .seal .glyph{stroke:var(--ink-soft); stroke-width:1.4; fill:none; transition:stroke .3s ease;}
+  .toolbar select, .toolbar button{
+    font-family:var(--font-ui); font-size:.82rem;
+    background:var(--paper-raised); color:var(--ink);
+    border:1px solid var(--rule); border-radius:var(--radius);
+    padding:6px 10px; cursor:pointer;
+  }
+  .toolbar select:focus-visible, .toolbar button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, details summary:focus-visible{
+    outline:2px solid var(--gold); outline-offset:2px;
+  }
+  .toolbar__group{display:flex; align-items:center; gap:6px;}
+  .toolbar__group label{font-size:.72rem; color:var(--ink-soft); letter-spacing:.02em;}
+  .btn-primary{
+    background:var(--ink); color:var(--paper); border-color:var(--ink);
+    font-weight:600;
+  }
+  .menu{position:relative;}
+  .menu__panel{
+    position:absolute; right:0; top:calc(100% + 6px);
+    background:var(--paper-raised); border:1px solid var(--rule);
+    box-shadow:var(--shadow); border-radius:var(--radius);
+    min-width:220px; padding:6px; display:none; flex-direction:column; gap:2px;
+    z-index:60;
+  }
+  .menu.open .menu__panel{display:flex;}
+  .menu__panel button{
+    text-align:left; background:transparent; border:none; padding:9px 10px;
+    border-radius:var(--radius); width:100%;
+  }
+  .menu__panel button:hover{background:var(--rule-soft);}
+  .menu__panel .hint{font-size:.7rem; color:var(--ink-soft); padding:6px 10px 2px; font-family:var(--font-ui);}
+
+  /* ---------- Hero ---------- */
+  .hero{max-width:1180px; margin:0 auto; padding:34px 20px 6px;}
+  .hero__eyebrow{font-family:var(--font-ui); text-transform:uppercase; letter-spacing:.14em; font-size:.72rem; color:var(--gold-text); font-weight:600;}
+  .hero h1{font-family:var(--font-display); font-weight:700; font-size:clamp(1.7rem, 3.4vw, 2.5rem); margin:.3em 0 .3em; letter-spacing:-.01em;}
+  .hero p.lead{max-width:62ch; color:var(--ink-soft); font-size:1.02rem;}
+  .hero__meta{display:flex; gap:18px; flex-wrap:wrap; margin-top:14px; font-family:var(--font-ui); font-size:.82rem;}
+  .pill{
+    display:inline-flex; align-items:center; gap:6px; padding:5px 12px;
+    border:1px solid var(--rule); border-radius:100px; color:var(--ink-soft);
+  }
+  .pill strong{color:var(--ink);}
+
+  /* ---------- Layout ---------- */
+  .layout{
+    max-width:1180px; margin:0 auto; padding:26px 20px 80px;
+    display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:34px;
+    align-items:start;
+  }
+  @media (max-width: 900px){
+    .layout{grid-template-columns:1fr; padding:18px 14px 60px;}
+    .marginalia{display:none;}
+  }
+
+  /* ---------- Document paper ---------- */
+  .paper{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:6px;
+    box-shadow:var(--shadow);
+    position:relative;
+    overflow:hidden;
+  }
+  .paper::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:8px;
+    background:
+      linear-gradient(115deg, transparent 45%, var(--paper) 45%, var(--paper) 55%, transparent 55%) 0 0/16px 16px,
+      var(--paper-raised);
+    opacity:.6;
+  }
+  .paper__inner{padding:44px clamp(20px,5vw,64px) 56px;}
+  .doc-title{
+    font-family:var(--font-display); font-weight:700;
+    font-size:clamp(1.5rem, 2.6vw, 2rem);
+    text-align:center; letter-spacing:.01em; margin:0 0 6px;
+  }
+  .doc-rule{
+    height:1px; background:linear-gradient(90deg, transparent, var(--rule) 15%, var(--rule) 85%, transparent);
+    margin:0 auto 8px; width:70%;
+  }
+  .doc-rule.thin{opacity:.6; margin-top:2px;}
+  .doc-sub{text-align:center; font-family:var(--font-ui); font-size:.76rem; color:var(--ink-soft); letter-spacing:.03em; margin-bottom:34px;}
+  .doc-intro{font-style:italic; color:var(--ink-soft); font-size:.98em; margin-bottom:36px; line-height:1.7;}
+
+  .doc-section{padding:22px 0 26px; border-top:1px solid var(--rule-soft); scroll-margin-top:90px;}
+  .doc-section:first-of-type{border-top:none;}
+  .doc-section__head{display:flex; align-items:baseline; gap:12px; margin-bottom:14px;}
+  .doc-section__num{
+    font-family:var(--font-display); font-weight:600; color:var(--gold-text);
+    font-size:1.05rem; flex:none;
+  }
+  .doc-section h2{font-family:var(--font-display); font-weight:600; font-size:1.2rem; margin:0;}
+  .doc-section h3{font-family:var(--font-display); font-weight:600; font-size:1.02rem; margin:18px 0 8px; color:var(--ink-soft);}
+  .doc-section p{margin:0 0 12px;}
+
+  .field-row{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:10px;}
+  .field{display:flex; flex-direction:column; gap:4px; flex:1 1 200px;}
+  .field label{font-family:var(--font-ui); font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft);}
+  .field input, .field textarea, .field select{
+    font-family:var(--font-body); font-size:1rem; color:var(--ink);
+    background:transparent; border:none; border-bottom:1.5px dotted var(--rule);
+    padding:5px 2px; width:100%;
+  }
+  .field select{font-family:var(--font-ui); font-size:.88rem; border:1px solid var(--rule); border-radius:var(--radius); padding:7px 8px; background:var(--paper);}
+  .field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible{outline:2px solid var(--gold); outline-offset:1px; border-bottom-style:solid;}
+  .field textarea{resize:vertical; min-height:52px; border:1px dashed var(--rule); border-radius:var(--radius); padding:8px;}
+  .field input::placeholder, .field textarea::placeholder{color:var(--rule); font-style:italic;}
+
+  .choice{margin:14px 0;}
+  .choice label.choice-label{font-family:var(--font-ui); font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--gold-text); display:block; margin-bottom:5px;}
+  .conditional{
+    margin-top:10px; padding:12px 14px; background:color-mix(in srgb, var(--gold) 8%, transparent);
+    border-left:3px solid var(--gold); border-radius:0 4px 4px 0;
+  }
+  .conditional[hidden]{display:none;}
+  .note-inline{
+    font-family:var(--font-ui); font-size:.82rem; color:var(--brick);
+    background:color-mix(in srgb, var(--brick) 8%, transparent);
+    border-left:3px solid var(--brick); padding:8px 12px; border-radius:0 4px 4px 0; margin-top:10px;
+  }
+  .note-inline[hidden]{display:none;}
+
+  .kohteet{display:flex; flex-direction:column; gap:8px; margin:10px 0;}
+  .kohde-row{display:flex; gap:8px; align-items:center;}
+  .kohde-row input{flex:1;}
+  .kohde-row .num{font-family:var(--font-ui); color:var(--gold-text); font-weight:600; width:1.4em;}
+  .icon-btn{
+    background:transparent; border:1px solid var(--rule); border-radius:var(--radius);
+    width:28px; height:28px; cursor:pointer; color:var(--ink-soft); font-family:var(--font-ui);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn:hover{border-color:var(--brick); color:var(--brick);}
+  .add-btn{
+    font-family:var(--font-ui); font-size:.82rem; background:transparent;
+    border:1px dashed var(--rule); border-radius:var(--radius); padding:7px 12px; cursor:pointer;
+    color:var(--ink-soft); align-self:flex-start;
+  }
+  .add-btn:hover{border-color:var(--gold-text); color:var(--gold-text);}
+
+  .sig-block{display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-top:26px;}
+  .sig-line{border-top:1px solid var(--ink-soft); padding-top:6px; font-family:var(--font-ui); font-size:.76rem; color:var(--ink-soft); min-height:44px;}
+  @media (max-width:560px){.sig-block{grid-template-columns:1fr;}}
+
+  .details-guide{margin-top:12px;}
+  .details-guide summary{
+    font-family:var(--font-ui); font-size:.78rem; color:var(--gold-text); cursor:pointer;
+    list-style:none; display:inline-flex; align-items:center; gap:5px;
+  }
+  .details-guide summary::-webkit-details-marker{display:none;}
+  .details-guide summary::before{content:"§"; font-family:var(--font-display);}
+  .details-guide[open] summary{margin-bottom:6px;}
+  .details-guide .guide-body{font-family:var(--font-ui); font-size:.82rem; color:var(--ink-soft); line-height:1.6; padding:8px 0 4px;}
+  @media (min-width:901px){.details-guide{display:none;}}
+
+  /* ---------- Marginalia ---------- */
+  .marginalia{position:sticky; top:78px; font-family:var(--font-ui);}
+  .marginalia__label{font-size:.68rem; text-transform:uppercase; letter-spacing:.12em; color:var(--gold-text); font-weight:600; margin-bottom:10px;}
+  .marginalia__card{
+    border-left:2px solid var(--gold);
+    padding:4px 0 4px 18px;
+    min-height:220px;
+  }
+  .marginalia__sec{font-family:var(--font-display); font-weight:600; font-size:1rem; margin:0 0 8px;}
+  .marginalia__law{
+    display:inline-block; font-size:.68rem; color:var(--gold-text); border:1px solid var(--gold-soft);
+    padding:2px 8px; border-radius:100px; margin-bottom:10px; font-weight:600;
+  }
+  .marginalia__text{font-size:.86rem; color:var(--ink-soft); line-height:1.65;}
+  .marginalia__text em{color:var(--brick); font-style:normal; font-weight:600;}
+
+  /* ---------- Footer ---------- */
+  .site-footer{
+    max-width:1180px; margin:0 auto; padding:0 20px 60px;
+    font-family:var(--font-ui); font-size:.82rem; color:var(--ink-soft);
+  }
+  .footer-grid{display:grid; grid-template-columns:2fr 1fr; gap:30px; border-top:1px solid var(--rule); padding-top:26px;}
+  @media (max-width:700px){.footer-grid{grid-template-columns:1fr;}}
+  .footer-grid h4{font-family:var(--font-ui); color:var(--ink); margin:0 0 8px; font-size:.82rem;}
+  .support-card{
+    background:var(--paper-raised); border:1px solid var(--rule); border-radius:6px; padding:16px;
+  }
+  .support-card a.btn-donate{
+    display:inline-block; margin-top:10px; background:var(--gold-text); color:var(--paper-raised);
+    padding:8px 16px; border-radius:100px; text-decoration:none; font-weight:600; font-size:.82rem;
+  }
+  .support-card a.btn-donate:hover{background:var(--ink);}
+  .disclaimer{
+    margin-top:22px; font-size:.76rem; color:var(--ink-soft); border-top:1px dashed var(--rule); padding-top:14px;
+  }
+
+  /* ---------- Print ---------- */
+  #print-doc{display:none;}
+  @media print{
+    .toolbar, .hero, .marginalia, .site-footer, .details-guide, .add-btn, .icon-btn, .kohde-row .icon-btn{display:none !important;}
+    body{background:#fff;}
+    .layout{display:block; padding:0;}
+    .paper{display:none;}
+    #print-doc{display:block; font-family:'Source Serif 4', serif; color:#111; padding:0 8mm;}
+    #print-doc h1{font-family:'Fraunces', serif; text-align:center;}
+    #print-doc h2{font-family:'Fraunces', serif; font-size:1.1rem; border-top:1px solid #999; padding-top:10px; margin-top:18px;}
+  }
+
+  .visually-hidden{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);}
+</style>
+</head>
+<body data-theme="paper">
+<a class="skip-link" href="#doc-start">Siirry asiakirjaan</a>
+
+<div class="toolbar" role="toolbar" aria-label="Ulkoasu ja vienti">
+  <div class="toolbar__brand">
+    <svg class="seal" viewBox="0 0 40 40" aria-hidden="true">
+      <circle class="track" cx="20" cy="20" r="17"></circle>
+      <circle id="seal-progress" class="progress" cx="20" cy="20" r="17" stroke-dasharray="106.8" stroke-dashoffset="106.8"></circle>
+      <g class="glyph" transform="translate(20,20)">
+        <path d="M-8,4 L-2,-6 L4,4" />
+        <path d="M-8,4 L4,4" />
+        <circle cx="6" cy="-7" r="1" fill="var(--ink-soft)" stroke="none"/>
+      </g>
+    </svg>
+    <span>Edunvalvontavaltakirja-rakentaja</span>
+  </div>
+
+  <div class="toolbar__group">
+    <label for="sel-font">Fontti</label>
+    <select id="sel-font" aria-label="Valitse asiakirjan fontti">
+      <option value="serif1">Fraunces / Source Serif</option>
+      <option value="serif2">Newsreader</option>
+      <option value="mono">IBM Plex Mono</option>
+      <option value="sans">Inter (selkeä)</option>
+    </select>
+  </div>
+  <div class="toolbar__group">
+    <label for="sel-theme">Väriteema</label>
+    <select id="sel-theme" aria-label="Valitse väriteema">
+      <option value="paper">Pergamentti</option>
+      <option value="ink">Mustesininen (tumma)</option>
+      <option value="meri">Merensyvä vihreä</option>
+    </select>
+  </div>
+  <div class="toolbar__group">
+    <label for="sel-size">Tekstikoko</label>
+    <select id="sel-size" aria-label="Valitse tekstikoko">
+      <option value="0.92">Pieni</option>
+      <option value="1" selected>Normaali</option>
+      <option value="1.12">Suuri</option>
+      <option value="1.28">Erittäin suuri</option>
+    </select>
+  </div>
+
+  <button type="button" id="btn-copy">Kopioi</button>
+  <div class="menu" id="export-menu">
+    <button type="button" class="btn-primary" id="export-toggle" aria-haspopup="true" aria-expanded="false">Lataa ▾</button>
+    <div class="menu__panel" role="menu">
+      <span class="hint">Tallenna asiakirja</span>
+      <button type="button" data-action="txt">Tekstitiedostona (.txt)</button>
+      <button type="button" data-action="doc">Word-tiedostona (.doc)</button>
+      <button type="button" data-action="pdf">Tulosta / Tallenna PDF</button>
+      <span class="hint">Muualle</span>
+      <button type="button" data-action="mail">Lähetä sähköpostiin</button>
+      <button type="button" data-action="gdocs">Kopioi Google Docsiin</button>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="hero__eyebrow">Maksuton, muokattava pohja · Suomi</div>
+  <h1>Edunvalvontavaltakirja</h1>
+  <p class="lead">Täytä alle oma tilanteesi. Jokainen valinta muuttuu suoraan asiakirjan tekstiksi, ja oikealla puolella kulkeva ohje kertoo, mitä laki kunkin kohdan osalta edellyttää. Lopuksi vie asiakirja tulostettavaksi tai jatkokäsittelyyn.</p>
+  <div class="hero__meta">
+    <span class="pill">Perustuu lakiin <strong>648/2007</strong></span>
+    <span class="pill" id="progress-pill">Täytetty <strong><span id="progress-pct">0</span> %</strong></span>
+    <span class="pill">Ei tallenna mitään palvelimelle — kaikki pysyy tässä selaimessa</span>
+  </div>
+</header>
+
+<div class="layout" id="doc-start">
+  <main class="paper" aria-label="Valtakirjan luonnos">
+    <div class="paper__inner">
+      <h1 class="doc-title">EDUNVALVONTAVALTAKIRJA</h1>
+      <div class="doc-rule"></div>
+      <div class="doc-sub">Laki edunvalvontavaltuutuksesta (648/2007)</div>
+
+      <p class="doc-intro" id="text-intro">
+        Minä, <span class="fill" data-fill="valtuuttaja.nimi">[valtuuttajan nimi]</span> (”valtuuttaja”), annan tällä asiakirjalla edunvalvontavaltuutuksesta annetussa laissa (648/2007) tarkoitetun edunvalvontavaltuutuksen jäljempänä mainituin ehdoin. Asiakirjaan sovelletaan Suomen lakia.
+      </p>
+      <details class="details-guide"><summary>Täyttöohje</summary><div class="guide-body" data-guide-body="intro"></div></details>
+
+      <!-- 1 Valtuuttaja -->
+      <section class="doc-section" id="sec-valtuuttaja" data-guide="valtuuttaja">
+        <div class="doc-section__head"><span class="doc-section__num">1</span><h2>Valtuuttaja</h2></div>
+        <p>Henkilö, jonka asioita tämä valtuutus koskee.</p>
+        <div class="field-row">
+          <div class="field"><label for="vt-nimi">Nimi</label><input id="vt-nimi" data-model="valtuuttaja.nimi" placeholder="Etunimi Sukunimi" autocomplete="off"></div>
+          <div class="field"><label for="vt-hetu">Henkilötunnus</label><input id="vt-hetu" data-model="valtuuttaja.hetu" placeholder="ppkkvv-xxxx" autocomplete="off"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="vt-osoite">Osoite</label><input id="vt-osoite" data-model="valtuuttaja.osoite" placeholder="Katuosoite, postinumero ja -toimipaikka" autocomplete="off"></div>
+          <div class="field"><label for="vt-puh">Puhelinnumero</label><input id="vt-puh" data-model="valtuuttaja.puhelin" placeholder="04X XXX XXXX" autocomplete="off"></div>
+        </div>
+        <details class="details-guide"><summary>Täyttöohje</summary><div class="guide-body" data-guide-body="valtuuttaja"></div></details>
+      </section>
+
+      <!-- 2 Valtuutettu -->
+      <section class="doc-section" id="sec-valtuutettu" data-guide="valtuutettu">
+        <div class="doc-section__head"><span class="doc-section__num">2</span><h2>Valtuutettu</h2></div>
+        <p>Henkilö, joka hoitaa valtuuttajan asioita, kun valtuutus tulee voimaan.</p>
+        <div class="field-row">
+          <div class="field"><label for="ve-nimi">Nimi</label><input id="ve-nimi" data-model="valtuutettu.nimi" placeholder="Etunimi Sukunimi" autocomplete="off"></div>
+          <div class="field"><label for="ve-hetu">Henkilötunnus</label><input id="ve-hetu" data-model="valtuutettu.hetu" placeholder="ppkkvv-xxxx" autocomplete="off"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="ve-osoite">Osoite</label><input id="ve-osoite" data-model="valtuutettu.osoite" placeholder="Katuosoite, postinumero ja -toimipaikka" autocomplete="off"></div>
+          <div class="field"><label for="ve-puh">Puhelinnumero</label><input id="ve-puh" data-model="valtuutettu.puhelin" placeholder="04X XXX XXXX" autocomplete="off"></div>
+        </div>
+        <details class="details-guide"><summary>Täyttöohje</summary><div class="guide-body" data-guide-body="valtuutettu"></div></details>
+      </section>
+
+      <!-- 3 Vara- ja toissijainen -->
+      <section class="doc-section" id="sec-vara" data-guide="vara">
+        <div class="doc-section__head"><span class="doc-section__num">3</span><h2>Vara- ja toissijainen valtuutettu</h2></div>
+        <div class="choice">
+          <label class="choice-label" for="sel-vara-eri">Roolien järjestely</label>
+          <select id="sel-vara-eri" data-model="varaTapa">
+            <option value="sama">Sama henkilö toimii sekä varavaltuutettuna että toissijaisena valtuutettuna</option>
+            <option value="eri">Eri henkilöt kummassakin roolissa</option>
+            <option value="eivara">Ei nimetä varavaltuutettua eikä toissijaista valtuutettua</option>
+          </select>
+        </div>
+        <div class="conditional" data-show-when="varaTapa!=eivara">
+          <p style="margin-bottom:6px; font-family:var(--font-ui); font-size:.78rem; color:var(--ink-soft);">Varavaltuutettu <span data-show-inline="varaTapa=sama">/ toissijainen valtuutettu</span></p>
+          <div class="field-row">
+            <div class="field"><label for="va-nimi">Nimi</label><input id="va-nimi" data-model="vara.nimi" placeholder="Etunimi Sukunimi" autocomplete="off"></div>
+            <div class="field"><label for="va-hetu">Henkilötunnus</label><input id="va-hetu" data-model="vara.hetu" placeholder="ppkkvv-xxxx" autocomplete="off"></div>
+            <div class="field"><label for="va-osoite">Osoite</label><input id="va-osoite" data-model="vara.osoite" placeholder="Osoite" autocomplete="off"></div>
+          </div>
+        </div>
+        <div class="conditional" data-show-when="varaTapa=eri">
+          <p style="margin-bottom:6px; font-family:var(--font-ui); font-size:.78rem; color:var(--ink-soft);">Toissijainen valtuutettu</p>
+          <div class="field-row">
+            <div class="field"><label for="to-nimi">Nimi</label><input id="to-nimi" data-model="toissijainen.nimi" placeholder="Etunimi Sukunimi" autocomplete="off"></div>
+            <div class="field"><label for="to-hetu">Henkilötunnus</label><input id="to-hetu" data-model="toissijainen.hetu" placeholder="ppkkvv-xxxx" autocomplete="off"></div>
+            <div class="field"><label for="to-osoite">Osoite</label><input id="to-osoite" data-model="toissijainen.osoite" placeholder="Osoite" autocomplete="off"></div>
+          </div>
+        </div>
+        <div class="note-inline" data-show-when="varaTapa=sama">Jos sama henkilö asuu valtuutetun kanssa samassa taloudessa, hän voi olla esteellinen samoista syistä kuin valtuutettu itse — varasuoja ei silloin toimi juuri niissä tilanteissa, joissa sitä eniten tarvittaisiin. Harkitse tarvittaessa täysin ulkopuolista henkilöä.</div>
+        <details class="details-guide"><summary>Täyttöohje</summary><div class="guide-body" data-guide-body="vara"></div></details>
+      </section>
+
+      <!-- 4 Sisältö -->
+      <section class="doc-section" id="sec-sisalto" data-guide="sisalto-talous">
+        <div class="doc-section__head"><span class="doc-section__num">4</span><h2>Valtuutuksen sisältö</h2></div>
+
+        <h3>4.1 Taloudelliset asiat</h3>
+        <div class="choice">
+          <select data-model="talous">
+            <option value="laaja">Kaikki omaisuutta koskevat ja muut taloudelliset asiat (suositus)</option>
+            <option value="rajattu">Rajattu koskemaan vain tiettyjä asioita</option>
+          </select>
+        </div>
+        <div class="conditional" data-show-when="talous=rajattu">
+          <div class="field"><label for="talous-rajaus">Kuvaile, mitä asioita valtuutus koskee</label><textarea id="talous-rajaus" data-model="talousRajaus" placeholder="Esim. vain pankkitilien käyttöoikeus ja laskujen maksaminen"></textarea></div>
+        </div>
+
+        <h3 data-guide-trigger="sisalto-kiinteisto">4.2 Kiinteistö- ja asunto-omaisuus</h3>
+        <div class="choice">
+          <select data-model="kiinteisto" data-guide-trigger="sisalto-kiinteisto">
+            <option value="sisalla">Sisällytä nimenomainen oikeus hoitaa, vuokrata, myydä, kiinnittää ja pantata kiinteistö- ja asunto-omaisuutta</option>
+            <option value="ei">Ei kiinteistö- tai asunto-omaisuutta / ei tarvetta</option>
+            <option value="rajoitettu">Rajoitettu koskemaan vain tiettyä kohdetta</option>
+          </select>
+        </div>
+        <div class="conditional" data-show-when="kiinteisto=rajoitettu">
+          <div class="field"><label for="kiinteisto-rajaus">Yksilöi kohde</label><input id="kiinteisto-rajaus" data-model="kiinteistoRajaus" placeholder="Esim. osoite tai kiinteistötunnus"></div>
+        </div>
+
+        <h3 data-guide-trigger="sisalto-henkilo">4.3 Henkilöä koskevat asiat</h3>
+        <div class="choice">
+          <select data-model="henkiloasiat" data-guide-trigger="sisalto-henkilo">
+            <option value="laaja">Laaja valtuutus: asuminen, hoito, sosiaali- ja terveyspalvelut</option>
+            <option value="suppea">Suppea valtuutus: vain arkipäivän asiointi</option>
+            <option value="ei">Ei sisällytetä henkilöä koskevia asioita</option>
+          </select>
+        </div>
+
+        <h3 data-guide-trigger="sisalto-lahja">4.4 Lahjoitusoikeus</h3>
+        <div class="choice">
+          <select data-model="lahja" data-guide-trigger="sisalto-lahja">
+            <option value="ei">Ei lahjoitusoikeutta (suositus, ellei erityistä tarvetta)</option>
+            <option value="tavanomainen">Tavanomaiset, kohtuulliset merkkipäivä- ja joululahjat muille kuin valtuutetulle itselleen</option>
+            <option value="yksiloity">Yksilöity lahja — määrittele kohde, saaja ja ajankohta</option>
+          </select>
+        </div>
+        <div class="conditional" data-show-when="lahja=yksiloity">
+          <div class="field"><label for="lahja-maar">Kuvaile lahja (kohde, saaja, ajankohta tai peruste)</label><textarea id="lahja-maar" data-model="lahjaMaarittely" placeholder="Esim. 500 euron lahja lapsenlapselle täysi-ikäisyyden kunniaksi"></textarea></div>
+        </div>
+        <div class="note-inline" data-show-when="lahja!=ei">Jos lahjan saajaksi tulisi valtuutettu itse, tarvitaan aina esteetön varavaltuutettu toteuttamaan lahjoitus — tätä ei voi kiertää valtakirjan sanamuodolla (648/2007, 18 §).</div>
+
+        <details class="details-guide"><summary>Täyttöohje</summary><div class="guide-body" data-guide-body="sisalto-talous"></div></details>
+      </section>
+
+      <!-- 5 Voimaantulo -->
+      <section class="doc-section" id="sec-voimaantulo" data-guide="voimaantulo">
+        <div class="doc-section__head"><span class="doc-section__num">5</span><h2>Voimaantuloehto</h2></div>
+        <p>Määrään valtuutuksen tulemaan voimaan siinä tapauksessa, että tulen sairauden, henkisen toiminnan häiriintymisen, heikentyneen terveydentilan tai muun vastaavan syyn vuoksi kykenemättömäksi huolehtimaan asioistani, ja vasta kun Digi- ja väestötietovirasto on sen vahvistanut.</p>
+        <p style="font-family:var(--font-ui); font-size:.76rem; color:var(--ink-soft); font-style:italic;">Tämä ehto on lain edellyttämä vakiomuotoilu, eikä sitä yleensä ole syytä muuttaa.</p>
+        <details class="details-guide"><summary>Täyttöohje</summary><div class="guide-body" data-guide-body="voimaantulo"></div></details>
+      </section>
+
+      <!-- 6 Kirjanpito -->
+      <section class="doc-section" id="sec-kirjanpito" data-guide="kirjanpito">
+        <div class="doc-section__head"><span class="doc-section__num">6</span><h2>Kirjanpito ja tilivelvollisuus</h2></div>
+        <p>Valtuutetun on pidettävä valtuuttajan varat erillään omistaan ja jatkuvaa kirjaa tehdyistä toimista tositteineen.</p>
+        <div class="choice">
+          <select data-model="tili">
+            <option value="vapautus">Vapautus vuosittaisen tilin ja omaisuusluettelon antamisesta DVV:lle, ellei virasto erikseen pyydä</option>
+            <option value="normaali">Vuositili ja omaisuusluettelo annetaan DVV:lle normaalisti</option>
+          </select>
+        </div>
+        <details class="details-guide"><summary>Täyttöohje</summary><div class="guide-body" data-guide-body="kirjanpito"></div></details>
+      </section>
+
+      <!-- 7 Palkkio -->
+      <section class="doc-section" id="sec-palkkio" data-guide="palkkio">
+        <div class="doc-section__head"><span class="doc-section__num">7</span><h2>Palkkio ja korvaukset</h2></div>
+        <div class="choice">
+          <select data-model="palkkio">
+            <option value="ei">Ei palkkiota eikä erillistä kulukorvausta</option>
+            <option value="palkkio">Kohtuullinen palkkio yleisestä asioiden hoidosta</option>
+            <option value="kulukorvaus">Ei palkkiota, mutta kulukorvaus tietyistä tehtävistä (esim. kiinteistönhoito)</option>
+            <option value="kulukorvaus-poikkeus">Kulukorvaus + nimenomainen itsekontrahointioikeus (valtuutettu saa maksaa korvaukset itselleen ilman varavaltuutettua)</option>
+          </select>
+        </div>
+        <div class="conditional" data-show-when="palkkio=kulukorvaus">
+          <div class="field"><label for="kulu-maar">Kuvaile korvattavat tehtävät ja korvausperuste</label>
+            <textarea id="kulu-maar" data-model="kulukorvausMaarittely" placeholder="Esim. asunto- ja kiinteistöomaisuuden hoito-, remontti- ja ylläpitotöistä maksetaan Verohallinnon enimmäismäärien mukaiset kilometrikorvaukset, todelliset materiaalikorvaukset ja kohtuullinen tuntikorvaus, edellyttäen ajantasaista tuntikirjanpitoa ja kuitteja."></textarea>
+          </div>
+          <div class="note-inline" style="display:block;">Jos valtuutettu maksaa korvauksia itselleen, hän on tosiasiassa vastapuolena itseään vastaan. Dokumentoi korvausperusteet ja kuitit tarkasti, ja harkitse, että merkittävät kertakorvaukset vahvistaa varavaltuutettu.</div>
+        </div>
+        <div class="conditional" data-show-when="palkkio=kulukorvaus-poikkeus">
+          <div class="field"><label for="kulu-maar2">Kuvaile korvattavat tehtävät ja korvausperuste</label>
+            <textarea id="kulu-maar2" data-model="kulukorvausMaarittely" placeholder="Esim. asunto- ja kiinteistöomaisuuden hoito-, remontti- ja ylläpitotöistä maksetaan Verohallinnon enimmäismäärien mukaiset kilometrikorvaukset, todelliset materiaalikorvaukset ja kohtuullinen tuntikorvaus, edellyttäen ajantasaista tuntikirjanpitoa ja kuitteja."></textarea>
+          </div>
+          <div class="note-inline" style="display:block;"><strong>Kokeile tätä vaihtoehtoa harkiten.</strong> Tällainen valtakirjassa annettu, esteellisyyssäännökset syrjäyttävä lupa on nähty todellisissa valtakirjoissa, mutta sen pätevyyttä ei ole vahvistettu oikeuskäytännössä samalla tavalla kuin tavanomaista kulukorvausoikeutta. Turvallisempi lähtökohta on jättää tämä valitsematta ja nojata pelkkään kulukorvausoikeuteen (edellinen vaihtoehto), tai tarkistaa muotoilu juristilta ennen allekirjoittamista.</div>
+        </div>
+        <details class="details-guide"><summary>Täyttöohje</summary><div class="guide-body" data-guide-body="palkkio"></div></details>
+      </section>
+
+      <!-- 8 Luovutus -->
+      <section class="doc-section" id="sec-luovutus" data-guide="luovutus">
+        <div class="doc-section__head"><span class="doc-section__num">8</span><h2>Ohje omaisuuden luovutusjärjestyksestä</h2></div>
+        <div class="choice">
+          <select data-model="luovutus">
+            <option value="ei">Ei erityistä ohjetta</option>
+            <option value="jarjestys">Ohjeellinen luovutusjärjestys, jos varoja on realisoitava</option>
+            <option value="harkinta">Valtuutetun vapaa harkinta (ei kiinteää järjestystä eikä kohdeluetteloa)</option>
+          </select>
+        </div>
+        <div class="conditional" data-show-when="luovutus=jarjestys">
+          <p style="font-size:.9rem; margin-bottom:8px;">Mikäli valtuuttajan asumis- tai hoitokulujen kattaminen edellyttää omaisuuden realisointia, siitä tulee luopua ensisijaisesti seuraavassa järjestyksessä, jollei markkinatilanne tai muu painava syy edellytä toisin:</p>
+          <div class="kohteet" id="kohteet-list"></div>
+          <button type="button" class="add-btn" id="add-kohde">+ Lisää kohde</button>
+        </div>
+        <details class="details-guide"><summary>Täyttöohje</summary><div class="guide-body" data-guide-body="luovutus"></div></details>
+      </section>
+
+      <!-- 9 Allekirjoitus -->
+      <section class="doc-section" id="sec-allekirjoitus" data-guide="allekirjoitus">
+        <div class="doc-section__head"><span class="doc-section__num">9</span><h2>Paikka, aika ja allekirjoitus</h2></div>
+        <div class="field-row">
+          <div class="field" style="max-width:260px;"><label for="paikka">Paikkakunta</label><input id="paikka" data-model="paikka" placeholder="Esim. Helsinki"></div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-line">Valtuuttajan omakätinen allekirjoitus</div>
+          <div class="sig-line">Nimenselvennys</div>
+        </div>
+        <details class="details-guide"><summary>Täyttöohje</summary><div class="guide-body" data-guide-body="allekirjoitus"></div></details>
+      </section>
+
+      <!-- 10 Todistus -->
+      <section class="doc-section" id="sec-todistus" data-guide="todistus">
+        <div class="doc-section__head"><span class="doc-section__num">10</span><h2>Todistuslausuma</h2></div>
+        <p>Samanaikaisesti läsnä olleina esteettöminä todistajina vakuutamme, että valtuuttaja, jonka henkilöllisyyden olemme tarkistaneet, on omakätisesti allekirjoittanut tämän edunvalvontavaltuutuksesta annetussa laissa (648/2007) tarkoitetun edunvalvontavaltakirjan vapaasta tahdostaan ja sen merkityksen ymmärtäen. Meille on ilmoitettu asiakirjan olevan edunvalvontavaltakirja.</p>
+        <p>Vakuutamme, ettemme ole 648/2007 8 §:ssä tarkoitetulla tavalla esteellisiä: emme ole valtuuttajan, valtuutetun, varavaltuutetun tai toissijaisen valtuutetun puoliso, lapsi, lapsenlapsi, sisarus, vanhempi tai isovanhempi, emmekä tällaisen puoliso.</p>
+        <div class="sig-block">
+          <div class="sig-line">Todistajan omakätinen allekirjoitus<br>Nimenselvennys / syntymäaika / ammatti / osoite</div>
+          <div class="sig-line">Todistajan omakätinen allekirjoitus<br>Nimenselvennys / syntymäaika / ammatti / osoite</div>
+        </div>
+        <details class="details-guide"><summary>Täyttöohje</summary><div class="guide-body" data-guide-body="todistus"></div></details>
+      </section>
+
+    </div>
+  </main>
+
+  <aside class="marginalia" aria-label="Täyttöohje ja lakiperuste">
+    <div class="marginalia__label">Reunahuomautukset</div>
+    <div class="marginalia__card">
+      <p class="marginalia__sec" id="marg-title">Aloita täyttäminen</p>
+      <span class="marginalia__law" id="marg-law">648/2007</span>
+      <p class="marginalia__text" id="marg-text">Kun napsautat tai täytät jotakin asiakirjan kohtaa, tähän ilmestyy siihen liittyvä täyttöohje ja lain kohta, johon se perustuu.</p>
+    </div>
+  </aside>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div>
+      <h4>Mikä tämä on?</h4>
+      <p>Tämä on maksuton, vapaasti muokattava pohja suomalaisen edunvalvontavaltakirjan laatimiseen (laki edunvalvontavaltuutuksesta, 648/2007). Sen tarkoitus on auttaa hahmottamaan, mitä valinkoja valtakirjaan yleensä sisältyy, ja tuottaa niiden pohjalta selkeä luonnos jatkokäsittelyä varten.</p>
+      <p class="disclaimer">Tämä työkalu ei ole oikeudellista neuvontaa eikä korvaa juristin, asianajajan tai oikeusaputoimiston arviota. Laki ja sen tulkinta voivat muuttua — tarkista ajantasainen tilanne ennen allekirjoittamista, erityisesti jos omaisuuteen, korvauksiin tai useaan osapuoleen liittyy erityispiirteitä. Valtakirja tulee aina allekirjoittaa kahden esteettömän todistajan läsnä ollessa, ja se vahvistuu vasta Digi- ja väestötietoviraston päätöksellä. Kaikki täyttämäsi tiedot pysyvät tässä selaimessa — mitään ei lähetetä minnekään.</p>
+    </div>
+    <div class="support-card">
+      <h4>Tue tekijää</h4>
+      <p>Työkalu on ja pysyy maksuttomana. Jos se oli avuksi, voit halutessasi jättää 5 € kiitokseksi.</p>
+      <a class="btn-donate" id="donate-link" href="#" target="_blank" rel="noopener">Tue 5 € →</a>
+    </div>
+  </div>
+</footer>
+
+<div id="print-doc" aria-hidden="true"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Donation link ----------
+  // PayPal-maksulinkki tekijän tukemiseen (vapaaehtoinen)
+  document.getElementById('donate-link').href = "https://www.paypal.com/ncp/payment/EA9UJCWEVDS94";
+
+  // ---------- State ----------
+  const state = {
+    valtuuttaja:{nimi:'',hetu:'',osoite:'',puhelin:''},
+    valtuutettu:{nimi:'',hetu:'',osoite:'',puhelin:''},
+    varaTapa:'sama',
+    vara:{nimi:'',hetu:'',osoite:''},
+    toissijainen:{nimi:'',hetu:'',osoite:''},
+    talous:'laaja', talousRajaus:'',
+    kiinteisto:'sisalla', kiinteistoRajaus:'',
+    henkiloasiat:'laaja',
+    lahja:'ei', lahjaMaarittely:'',
+    tili:'vapautus',
+    palkkio:'ei', kulukorvausMaarittely:'',
+    luovutus:'ei',
+    kohteet:['',''],
+    paikka:''
+  };
+
+  function getPath(obj, path){
+    return path.split('.').reduce((o,k)=> (o==null?o:o[k]), obj);
+  }
+  function setPath(obj, path, val){
+    const parts = path.split('.');
+    let o = obj;
+    for(let i=0;i<parts.length-1;i++) o = o[parts[i]];
+    o[parts[parts.length-1]] = val;
+  }
+
+  // ---------- GUIDE content ----------
+  const GUIDE = {
+    intro:{title:'Miksi tämä alku tarvitaan', law:'2 §', text:'Laki edunvalvontavaltuutuksesta (648/2007) edellyttää, että valtakirjasta käy ilmi valtuuttamistarkoitus, osapuolet, valtuutuksen sisältö ja voimaantuloehto. Tämä avauslause nimeää asiakirjan laissa tarkoitetuksi edunvalvontavaltuutukseksi.'},
+    valtuuttaja:{title:'Valtuuttaja', law:'2–3 §', text:'Valtuuttaja on henkilö, jonka asioita valtuutus koskee. Hänen on oltava täysi-ikäinen ja kyettävä ymmärtämään valtakirjan merkitys sitä tehdessään (5 §). Merkitse nimi, henkilötunnus, osoite ja puhelinnumero täydellisinä — DVV tunnistaa osapuolet näiden tietojen perusteella.'},
+    valtuutettu:{title:'Valtuutettu', law:'2 §', text:'Valtuutettu voi olla vain luonnollinen henkilö, ei yritys tai yhteisö, ja hänen on oltava täysi-ikäinen. Valitse henkilö, johon luotat täysin — valtuutus voi kattaa laajan taloudellisen ja henkilökohtaisen päätösvallan.'},
+    vara:{title:'Vara- ja toissijainen valtuutettu', law:'4, 17 §', text:'Nämä ovat eri rooleja. Varavaltuutettu hoitaa yksittäisen asian, jos valtuutettu on tilapäisesti estynyt tai esteellinen — esimerkiksi kun asia koskee valtuutetun omaa taloudellista etua. Toissijainen valtuutettu astuu tilalle pysyvästi, jos valtuutettu ei enää voi tai halua hoitaa tehtävää. <em>Jos varahenkilö asuu valtuutetun kanssa, hän voi olla esteellinen samasta syystä.</em>'},
+    'sisalto-talous':{title:'Taloudelliset asiat', law:'2 §', text:'Taloudellisilla asioilla tarkoitetaan mm. pankki-, maksuliikenne-, vero- ja sopimusasioita. Valtuutus voidaan rajata koskemaan vain tiettyjä asioita, mutta laaja valtuutus on käytännössä joustavin arjen kannalta.'},
+    'sisalto-kiinteisto':{title:'Kiinteistö- ja asunto-omaisuus', law:'20 §', text:'Ennen 1.5.2026 allekirjoitetuissa valtakirjoissa kiinteistön myynti-, vuokraus- ja panttausoikeus piti mainita erikseen. Toukokuun 2026 lakimuutoksen jälkeen tämä sisältyy oletuksena yleiseen taloudellisten asioiden hoito-oikeuteen — nimenomainen maininta on silti suositeltavaa selvyyden vuoksi pankkeja ja kiinteistönvälittäjiä varten.'},
+    'sisalto-henkilo':{title:'Henkilöä koskevat asiat', law:'2 §', text:'Nämä (esim. asuminen, hoito, sosiaali- ja terveyspalvelut) voidaan sisällyttää valtuutukseen, mutta vain siltä osin kuin valtuuttaja itse ei enää kykene ymmärtämään niiden merkitystä. Valtuutus ei koskaan ulotu avioliittoon, testamenttiin, isyyden tunnustamiseen tai muihin korostetun henkilökohtaisiin oikeustoimiin.'},
+    'sisalto-lahja':{title:'Lahjoitusoikeus', law:'18 §', text:'Valtuutettu ei saa lahjoittaa valtuuttajan omaisuutta ilman valtakirjassa yksilöityä lupaa. <em>Jos lahjan saajaksi tulisi valtuutettu itse, tarvitaan aina esteetön varavaltuutettu toteuttamaan lahjoitus</em> — tätä ei voi kiertää valtakirjan sanamuodolla.'},
+    voimaantulo:{title:'Voimaantuloehto', law:'2 § 4 k.', text:'Voimaantuloehto on pakollinen osa valtakirjaa. Valtuutus tulee voimaan vasta, kun DVV on sen valtuutetun hakemuksesta ja lääkärinlausunnon perusteella erikseen vahvistanut — ei allekirjoitushetkellä.'},
+    kirjanpito:{title:'Kirjanpito ja tilivelvollisuus', law:'—', text:'Valtuutetulla on aina lakisääteinen velvollisuus pitää kirjaa toimistaan ja pitää varat erillään omistaan; tätä ei voi valtakirjalla poistaa. Valtuuttaja voi kuitenkin vapauttaa valtuutetun velvollisuudesta antaa vuosittainen tili ja omaisuusluettelo DVV:lle säännönmukaisesti. DVV voi silti aina pyytää tiliä erikseen, jos siihen on aihetta.'},
+    palkkio:{title:'Palkkio ja korvaukset', law:'17 §', text:'Valtuutetulla on oikeus kohtuulliseen palkkioon ja tarpeellisten kulujen korvaukseen, jos valtuuttaja niin määrää. Kun valtuutettu maksaa korvauksia itselleen, hän on tosiasiassa vastapuolena itseään vastaan — dokumentoi korvausperusteet ja kuitit tarkasti riitojen välttämiseksi. <em>Nimenomainen itsekontrahointioikeus on nähty todellisissa valtakirjoissa, mutta sen pätevyys ei ole yhtä vakiintunut kuin tavanomaisen kulukorvauksen — harkitse tarkkaan.</em>'},
+    luovutus:{title:'Omaisuuden luovutusjärjestys', law:'—', text:'Tämä on ohjeellinen tahdonilmaisu, ei ehdoton oikeudellinen määräys, jollei sitä nimenomaisesti niin muotoilla. Kannattaa kirjoittaa joustavaksi (”ensisijaisesti”, ”mikäli mahdollista”), jotta valtuutettu voi toimia valtuuttajan edun mukaisesti muuttuvissa tilanteissa.'},
+    allekirjoitus:{title:'Allekirjoitus', law:'6 §', text:'Valtuuttajan on allekirjoitettava valtakirja omakätisesti kahden esteettömän todistajan ollessa samanaikaisesti läsnä, tai tunnustettava heille jo tekemänsä allekirjoitus.'},
+    todistus:{title:'Todistuslausuma', law:'7–8 §', text:'Todistajien tulee olla täysi-ikäisiä ja ymmärtää todistamisen merkitys. Todistajana ei saa toimia valtuutettu, vara- tai toissijainen valtuutettu eikä kenenkään osapuolen puoliso, lapsi, lapsenlapsi, sisarus, vanhempi tai isovanhempi. Todistuslausumasta on käytävä ilmi samanaikainen läsnäolo ja valtuuttajan ymmärryskyky.'}
+  };
+
+  function setGuide(key){
+    const g = GUIDE[key];
+    if(!g) return;
+    document.getElementById('marg-title').textContent = g.title;
+    document.getElementById('marg-law').textContent = g.law;
+    document.getElementById('marg-text').innerHTML = g.text;
+    document.querySelectorAll('.doc-section').forEach(s=>s.classList.toggle('active', s.dataset.guide===key));
+  }
+  Object.keys(GUIDE).forEach(k=>{
+    const el = document.querySelector('[data-guide-body="'+k+'"]');
+    if(el){ el.innerHTML = '<strong>'+GUIDE[k].law+'</strong> — ' + GUIDE[k].text; }
+  });
+
+  // click/focus triggers within a section update guide immediately
+  document.querySelectorAll('.doc-section').forEach(sec=>{
+    sec.addEventListener('focusin', ()=> setGuide(sec.dataset.guide));
+    sec.addEventListener('click', ()=> setGuide(sec.dataset.guide));
+  });
+  document.querySelectorAll('[data-guide-trigger]').forEach(el=>{
+    el.addEventListener('focus', ()=> setGuide(el.dataset.guideTrigger));
+    el.addEventListener('change', ()=> setGuide(el.dataset.guideTrigger));
+  });
+
+  // scroll-sync (progressive enhancement, desktop only)
+  if('IntersectionObserver' in window && window.matchMedia('(min-width:901px)').matches){
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting) setGuide(e.target.dataset.guide);
+      });
+    }, {rootMargin:'-15% 0px -70% 0px', threshold:0});
+    document.querySelectorAll('.doc-section').forEach(s=>io.observe(s));
+  }
+
+  // ---------- Bind inputs ----------
+  function updateVisibility(){
+    document.querySelectorAll('[data-show-when]').forEach(el=>{
+      const expr = el.dataset.showWhen;
+      const m = expr.match(/^([\w.]+)(=|!=)(\w+)$/);
+      if(!m) return;
+      const [,path,op,val] = m;
+      const cur = getPath(state, path);
+      const match = op==='=' ? (cur===val) : (cur!==val);
+      if(match) el.removeAttribute('hidden'); else el.setAttribute('hidden','');
+    });
+    document.querySelectorAll('[data-show-inline]').forEach(el=>{
+      const expr = el.dataset.showInline;
+      const m = expr.match(/^([\w.]+)=(\w+)$/);
+      if(!m) return;
+      el.style.display = (getPath(state,m[1])===m[2]) ? 'inline' : 'none';
+    });
+  }
+
+  function syncModelToDOM(path, exceptEl){
+    document.querySelectorAll('[data-model="'+path+'"]').forEach(el=>{
+      if(el !== exceptEl) el.value = getPath(state, path);
+    });
+  }
+
+  function bindAll(){
+    document.querySelectorAll('[data-model]').forEach(el=>{
+      const path = el.dataset.model;
+      const val = getPath(state, path);
+      if(val !== undefined && el.tagName !== 'SELECT') el.value = val;
+      if(el.tagName === 'SELECT') el.value = val;
+      el.addEventListener('input', ()=>{
+        setPath(state, path, el.value);
+        syncModelToDOM(path, el);
+        updateVisibility();
+        updateText();
+        updateProgress();
+      });
+      el.addEventListener('change', ()=>{
+        setPath(state, path, el.value);
+        syncModelToDOM(path, el);
+        updateVisibility();
+        updateText();
+        updateProgress();
+      });
+    });
+  }
+
+  // ---------- Kohteet (dynamic list) ----------
+  const kohteetList = document.getElementById('kohteet-list');
+  function renderKohteet(){
+    kohteetList.innerHTML = '';
+    state.kohteet.forEach((val, i)=>{
+      const row = document.createElement('div');
+      row.className = 'kohde-row';
+      row.innerHTML = '<span class="num">'+(i+1)+'.</span>' +
+        '<input type="text" placeholder="Osoite tai kohteen kuvaus" aria-label="Kohde '+(i+1)+'">' +
+        '<button type="button" class="icon-btn" aria-label="Poista kohde" title="Poista">✕</button>';
+      const input = row.querySelector('input');
+      input.value = val;
+      input.addEventListener('input', ()=>{ state.kohteet[i] = input.value; updateText(); });
+      row.querySelector('button').addEventListener('click', ()=>{
+        state.kohteet.splice(i,1);
+        if(state.kohteet.length===0) state.kohteet.push('');
+        renderKohteet(); updateText();
+      });
+      kohteetList.appendChild(row);
+    });
+  }
+  document.getElementById('add-kohde').addEventListener('click', ()=>{
+    state.kohteet.push('');
+    renderKohteet();
+  });
+
+  // ---------- Text generation ----------
+  function esc(s){ return (s||'').toString(); }
+
+  function buildSections(){
+    const s = state;
+    const sections = [];
+    sections.push(['EDUNVALVONTAVALTAKIRJA','']);
+    sections.push([null, 'Minä, '+(esc(s.valtuuttaja.nimi)||'[valtuuttajan nimi]')+' ("valtuuttaja"), annan tällä asiakirjalla edunvalvontavaltuutuksesta annetussa laissa (648/2007) tarkoitetun edunvalvontavaltuutuksen jäljempänä mainituin ehdoin. Asiakirjaan sovelletaan Suomen lakia.']);
+
+    sections.push(['1. Valtuuttaja',
+      (esc(s.valtuuttaja.nimi)||'[nimi]')+', '+(esc(s.valtuuttaja.hetu)||'[henkilötunnus]')+'. '+(esc(s.valtuuttaja.osoite)||'[osoite]')+'. Puh. '+(esc(s.valtuuttaja.puhelin)||'[puhelin]')+'.']);
+
+    sections.push(['2. Valtuutettu',
+      (esc(s.valtuutettu.nimi)||'[nimi]')+', '+(esc(s.valtuutettu.hetu)||'[henkilötunnus]')+'. '+(esc(s.valtuutettu.osoite)||'[osoite]')+'. Puh. '+(esc(s.valtuutettu.puhelin)||'[puhelin]')+'.']);
+
+    let varaText = 'Ei nimetty varavaltuutettua eikä toissijaista valtuutettua.';
+    if(s.varaTapa==='sama'){
+      varaText = (esc(s.vara.nimi)||'[nimi]')+', '+(esc(s.vara.hetu)||'[henkilötunnus]')+', '+(esc(s.vara.osoite)||'[osoite]')+', toimii sekä varavaltuutettuna että toissijaisena valtuutettuna.';
+    } else if(s.varaTapa==='eri'){
+      varaText = 'Varavaltuutettu: '+(esc(s.vara.nimi)||'[nimi]')+', '+(esc(s.vara.hetu)||'[henkilötunnus]')+', '+(esc(s.vara.osoite)||'[osoite]')+'. Toissijainen valtuutettu: '+(esc(s.toissijainen.nimi)||'[nimi]')+', '+(esc(s.toissijainen.hetu)||'[henkilötunnus]')+', '+(esc(s.toissijainen.osoite)||'[osoite]')+'.';
+    }
+    if(s.varaTapa!=='eivara' && s.palkkio==='kulukorvaus-poikkeus'){
+      varaText += ' Varavaltuutetun myötävaikutusta ei kuitenkaan tarvita kohdassa 7 tarkoitetussa valtuutetun itselleen suorittamassa korvaus- ja maksutapahtumassa, jota koskee siinä määrätty poikkeus.';
+    }
+    sections.push(['3. Vara- ja toissijainen valtuutettu', varaText]);
+
+    let sisaltoParas = [];
+    if(s.talous==='laaja'){
+      sisaltoParas.push('4.1 Valtuutettu oikeutetaan edustamaan valtuuttajaa tämän omaisuutta koskevissa ja muissa taloudellisissa asioissa yleisesti.');
+    } else {
+      sisaltoParas.push('4.1 Valtuutettu oikeutetaan edustamaan valtuuttajaa taloudellisissa asioissa seuraavasti rajattuna: '+(esc(s.talousRajaus)||'[rajaus]')+'.');
+    }
+    if(s.kiinteisto==='sisalla'){
+      sisaltoParas.push('4.2 Valtuutettu oikeutetaan hoitamaan, vuokraamaan, myymään, kiinnittämään ja panttaamaan valtuuttajan kiinteistö- ja asunto-omaisuutta.');
+    } else if(s.kiinteisto==='rajoitettu'){
+      sisaltoParas.push('4.2 Valtuutettu oikeutetaan edellä mainituin tavoin ainoastaan seuraavan kohteen osalta: '+(esc(s.kiinteistoRajaus)||'[kohde]')+'.');
+    } else {
+      sisaltoParas.push('4.2 Valtuutus ei koske kiinteistö- tai asunto-omaisuutta.');
+    }
+    if(s.henkiloasiat==='laaja'){
+      sisaltoParas.push('4.3 Valtuutettu oikeutetaan edustamaan valtuuttajaa myös tämän henkilöä koskevissa asioissa (mm. asuminen, hoito, sosiaali- ja terveyspalvelut), joiden merkitystä valtuuttaja ei kykene ymmärtämään sillä hetkellä, jolloin valtuutusta on käytettävä.');
+    } else if(s.henkiloasiat==='suppea'){
+      sisaltoParas.push('4.3 Valtuutettu oikeutetaan edustamaan valtuuttajaa suppeasti tämän henkilöä koskevissa arkipäivän asioissa, joiden merkitystä valtuuttaja ei kykene ymmärtämään sillä hetkellä, jolloin valtuutusta on käytettävä.');
+    } else {
+      sisaltoParas.push('4.3 Valtuutus ei koske valtuuttajan henkilöä koskevia asioita.');
+    }
+    if(s.lahja==='ei'){
+      sisaltoParas.push('4.4 Valtuutettu ei saa lahjoittaa valtuuttajan omaisuutta.');
+    } else if(s.lahja==='tavanomainen'){
+      sisaltoParas.push('4.4 Valtuutettu saa antaa muille kuin itselleen tavanomaisia ja valtuuttajan varallisuusasemaan nähden kohtuullisia merkkipäivä- ja joululahjoja.');
+    } else {
+      sisaltoParas.push('4.4 Valtuutettu saa antaa seuraavan yksilöidyn lahjan: '+(esc(s.lahjaMaarittely)||'[kuvaus]')+'.');
+    }
+    sisaltoParas.push('Valtuutus ei koskaan koske avioliiton solmimista, isyyden tunnustamista, lapseksiottamista, testamentin tekemistä tai peruuttamista taikka muuta näihin rinnastuvaa henkilökohtaista oikeustointa.');
+    sections.push(['4. Valtuutuksen sisältö', sisaltoParas.join('\n\n')]);
+
+    sections.push(['5. Voimaantuloehto', 'Valtuutus tulee voimaan siinä tapauksessa, että valtuuttaja tulee sairauden, henkisen toiminnan häiriintymisen, heikentyneen terveydentilan tai muun vastaavan syyn vuoksi kykenemättömäksi huolehtimaan asioistaan, ja vasta kun Digi- ja väestötietovirasto on sen vahvistanut.']);
+
+    const tiliText = s.tili==='vapautus'
+      ? 'Valtuutetun on pidettävä valtuuttajan varat erillään omistaan ja jatkuvaa kirjaa tehdyistä toimista tositteineen. Valtuutetun ei tarvitse antaa Digi- ja väestötietovirastolle vuosittaista tiliä eikä omaisuusluetteloa säännönmukaisesti, ellei virasto sitä erikseen pyydä.'
+      : 'Valtuutetun on pidettävä valtuuttajan varat erillään omistaan ja jatkuvaa kirjaa tehdyistä toimista tositteineen. Valtuutettu antaa Digi- ja väestötietovirastolle vuosittaisen tilin ja omaisuusluettelon voimassa olevien ohjeiden mukaisesti.';
+    sections.push(['6. Kirjanpito ja tilivelvollisuus', tiliText]);
+
+    let palkkioText = 'Valtuutetulle ei makseta palkkiota eikä erillistä kulukorvausta tehtävän hoidosta.';
+    if(s.palkkio==='palkkio') palkkioText = 'Valtuutetulla on oikeus kohtuulliseen palkkioon tehtävän hoidosta.';
+    if(s.palkkio==='kulukorvaus') palkkioText = 'Valtuutetulle ei makseta palkkiota yleisestä asioiden hoidosta. '+(esc(s.kulukorvausMaarittely)||'[korvausperuste]');
+    if(s.palkkio==='kulukorvaus-poikkeus') palkkioText = 'Valtuutetulle ei makseta palkkiota yleisestä asioiden hoidosta. '+(esc(s.kulukorvausMaarittely)||'[korvausperuste]')+' Edunvalvontavaltuutuslain esteellisyyssäännösten estämättä valtuutetulla on nimenomainen oikeus edustaa valtuuttajaa tässä itselleen suoritettavassa korvaus- ja maksutapahtumassa (itsekontrahointi) ilman varavaltuutetun myötävaikutusta. Edellytyksenä on, että valtuutettu pitää näistä kuluista ja työtunneista ajantasaista, eriteltyä ja päivättyä kirjanpitoa tositteineen.';
+    sections.push(['7. Palkkio ja korvaukset', palkkioText]);
+
+    if(s.luovutus==='jarjestys'){
+      const kohteetText = state.kohteet.filter(k=>k.trim()).map((k,i)=> (i+1)+'. '+k).join('\n');
+      sections.push(['8. Ohje omaisuuden luovutusjärjestyksestä',
+        'Mikäli valtuuttajan asumis- tai hoitokulujen kattaminen edellyttää omaisuuden realisointia, siitä tulee luopua ensisijaisesti seuraavassa järjestyksessä, jollei markkinatilanne tai muu painava syy edellytä toisin:\n\n'+
+        (kohteetText||'[ei kohteita lisätty]')+
+        '\n\nKauppahinnat ja muut tuotot kuuluvat valtuuttajalle ja käytetään hänen tarpeisiinsa.']);
+    } else if(s.luovutus==='harkinta'){
+      sections.push(['8. Ohje omaisuuden luovutusjärjestyksestä',
+        'Mikäli valtuuttajan elinkustannusten, asumis- tai hoitokulujen kattaminen edellyttää asunto- ja kiinteistöomaisuuden realisointia varojen hankkimiseksi, valtuutetulla on oikeus realisoida valtuuttajan asunto- ja kiinteistöomaisuutta siinä järjestyksessä ja tavalla, kuin se valtuuttajan edun ja tilanteen vuoksi katsotaan tarkoituksenmukaiseksi. Kauppahinnat ja muut tuotot kuuluvat täysimääräisesti valtuuttajalle ja ne käytetään hänen omiin tarpeisiinsa.']);
+    } else {
+      sections.push(['8. Ohje omaisuuden luovutusjärjestyksestä', 'Ei erityistä ohjetta.']);
+    }
+
+    sections.push(['9. Paikka, aika ja allekirjoitus', (esc(s.paikka)||'[paikkakunta]')+'lla ____ . ____ . 20____\n\n\n_____________________________________\nValtuuttajan omakätinen allekirjoitus ja nimenselvennys']);
+
+    sections.push(['10. Todistuslausuma', 'Samanaikaisesti läsnä olleina esteettöminä todistajina vakuutamme, että valtuuttaja, jonka henkilöllisyyden olemme tarkistaneet, on omakätisesti allekirjoittanut tämän edunvalvontavaltuutuksesta annetussa laissa (648/2007) tarkoitetun edunvalvontavaltakirjan vapaasta tahdostaan ja sen merkityksen ymmärtäen. Meille on ilmoitettu asiakirjan olevan edunvalvontavaltakirja.\n\nVakuutamme, ettemme ole 648/2007 8 §:ssä tarkoitetulla tavalla esteellisiä: emme ole valtuuttajan, valtuutetun, varavaltuutetun tai toissijaisen valtuutetun puoliso, lapsi, lapsenlapsi, sisarus, vanhempi tai isovanhempi, emmekä tällaisen puoliso.\n\n\nTodistaja 1: ____________________________  Todistaja 2: ____________________________\nNimenselvennys / syntymäaika / ammatti / osoite']);
+
+    return sections;
+  }
+
+  function updateText(){
+    const fillEl = document.querySelector('[data-fill="valtuuttaja.nimi"]');
+    if(fillEl) fillEl.textContent = state.valtuuttaja.nimi || '[valtuuttajan nimi]';
+  }
+
+  function toPlainText(){
+    return buildSections().map(([h,body])=>{
+      if(h==='EDUNVALVONTAVALTAKIRJA') return h+'\n(Laki edunvalvontavaltuutuksesta 648/2007)\n';
+      let out = h ? h+'\n' : '';
+      out += body;
+      return out;
+    }).join('\n\n');
+  }
+
+  function toHTML(){
+    const secs = buildSections();
+    let html = '<h1 style="text-align:center;font-family:Georgia,serif;">EDUNVALVONTAVALTAKIRJA</h1>';
+    html += '<p style="text-align:center;font-size:.85em;color:#555;">Laki edunvalvontavaltuutuksesta (648/2007)</p>';
+    secs.slice(1).forEach(([h,body])=>{
+      if(h) html += '<h2 style="font-family:Georgia,serif;font-size:1.1em;margin-top:1.4em;">'+h+'</h2>';
+      html += '<p style="font-family:Georgia,serif;line-height:1.5;white-space:pre-line;">'+body.replace(/\n/g,'<br>')+'</p>';
+    });
+    return html;
+  }
+
+  // ---------- Export actions ----------
+  function download(filename, content, type){
+    const blob = new Blob([content], {type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  }
+
+  document.querySelectorAll('[data-action]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const action = btn.dataset.action;
+      if(action==='txt'){
+        download('edunvalvontavaltakirja.txt', toPlainText(), 'text/plain;charset=utf-8');
+      } else if(action==='doc'){
+        const htmlDoc = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Edunvalvontavaltakirja</title></head><body>"+toHTML()+"</body></html>";
+        download('edunvalvontavaltakirja.doc', htmlDoc, 'application/msword');
+      } else if(action==='pdf'){
+        document.getElementById('print-doc').innerHTML = toHTML();
+        window.print();
+      } else if(action==='mail'){
+        const body = toPlainText();
+        const SAFE_LIMIT = 800; // conservative: mailto bodies get URL-encoded (äöå etc. expand 3-9x) and many mail clients/OS handlers cap total mailto length around 2000 chars
+        let mailBody;
+        if(body.length <= SAFE_LIMIT){
+          mailBody = body;
+        } else {
+          mailBody = 'Täytit edunvalvontavaltakirja-luonnoksen, mutta se on liian pitkä lähetettäväksi suoraan sähköpostiviestin tekstinä (pituus '+body.length+' merkkiä) — sähköposti katkaisisi asiakirjan kesken lauseen, mikä olisi harhaanjohtavaa juuri tässä asiakirjatyypissä.\n\nToimi näin:\n1. Palaa selaimeen ja avaa Lataa-valikko.\n2. Lataa asiakirja Word- tai PDF-muodossa.\n3. Liitä ladattu tiedosto tähän viestiin liitteeksi.\n\n(Voit myös käyttää "Kopioi"-painiketta ja liittää sisällön suoraan tekstinkäsittelyohjelmaan.)';
+        }
+        window.location.href = 'mailto:?subject='+encodeURIComponent('Edunvalvontavaltakirja - luonnos')+'&body='+encodeURIComponent(mailBody);
+      } else if(action==='gdocs'){
+        copyRich();
+        window.open('https://docs.google.com/document/create', '_blank', 'noopener');
+      }
+      document.getElementById('export-menu').classList.remove('open');
+    });
+  });
+
+  async function copyRich(){
+    try{
+      const html = toHTML();
+      const text = toPlainText();
+      if(window.ClipboardItem){
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/plain': new Blob([text], {type:'text/plain'}),
+            'text/html': new Blob([html], {type:'text/html'})
+          })
+        ]);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+      return true;
+    } catch(e){
+      try { await navigator.clipboard.writeText(toPlainText()); return true; } catch(e2){ return false; }
+    }
+  }
+  document.getElementById('btn-copy').addEventListener('click', async ()=>{
+    const ok = await copyRich();
+    const btn = document.getElementById('btn-copy');
+    const old = btn.textContent;
+    btn.textContent = ok ? 'Kopioitu ✓' : 'Ei onnistunut';
+    setTimeout(()=>btn.textContent = old, 1800);
+  });
+
+  // ---------- Menu toggle ----------
+  const menu = document.getElementById('export-menu');
+  const toggle = document.getElementById('export-toggle');
+  toggle.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    menu.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', menu.classList.contains('open'));
+  });
+  document.addEventListener('click', (e)=>{ if(!menu.contains(e.target)) menu.classList.remove('open'); });
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') menu.classList.remove('open'); });
+
+  // ---------- Style controls ----------
+  const fontMap = {
+    serif1: {display:"'Fraunces', serif", body:"'Source Serif 4', serif"},
+    serif2: {display:"'Newsreader', serif", body:"'Newsreader', serif"},
+    mono:   {display:"'IBM Plex Mono', monospace", body:"'IBM Plex Mono', monospace"},
+    sans:   {display:"'Inter', sans-serif", body:"'Inter', sans-serif"}
+  };
+  document.getElementById('sel-font').addEventListener('change', (e)=>{
+    const f = fontMap[e.target.value];
+    document.documentElement.style.setProperty('--font-display', f.display);
+    document.documentElement.style.setProperty('--font-body', f.body);
+  });
+  document.getElementById('sel-theme').addEventListener('change', (e)=>{
+    document.body.setAttribute('data-theme', e.target.value);
+  });
+  document.getElementById('sel-size').addEventListener('change', (e)=>{
+    document.documentElement.style.setProperty('--font-scale', e.target.value);
+  });
+
+  // ---------- Progress / seal ----------
+  const CIRC = 2*Math.PI*17;
+  function updateProgress(){
+    const required = [state.valtuuttaja.nimi, state.valtuuttaja.hetu, state.valtuuttaja.osoite, state.valtutettuSafe()];
+    // safety fallback if helper missing
+    const req = [
+      state.valtuuttaja.nimi, state.valtuuttaja.hetu, state.valtuuttaja.osoite,
+      state.valtuutettu.nimi, state.valtuutettu.hetu, state.valtuutettu.osoite
+    ];
+    const filled = req.filter(v=>v && v.trim()).length;
+    const pct = Math.round((filled/req.length)*100);
+    document.getElementById('progress-pct').textContent = pct;
+    const offset = CIRC - (CIRC*pct/100);
+    const ring = document.getElementById('seal-progress');
+    ring.style.strokeDasharray = CIRC;
+    ring.style.strokeDashoffset = offset;
+    ring.style.stroke = pct>=100 ? 'var(--green)' : 'var(--gold)';
+  }
+  state.valtutettuSafe = function(){ return ''; }; // no-op guard, unused
+
+  // ---------- Init ----------
+  bindAll();
+  renderKohteet();
+  updateVisibility();
+  updateText();
+  updateProgress();
+  setGuide('intro');
+})();
+</script>
+</body>
+</html>
