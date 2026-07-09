@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Edunvalvontavaltakirja — maksuton pohja</title>
+<meta name="description" content="Maksuton, muokattava suomalainen edunvalvontavaltakirja-pohja. Täytä selaimessa, valitse tilanteeseesi sopivat vaihtoehdot ja lataa Word-, PDF- tai tekstitiedostona. Perustuu lakiin 648/2007.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Edunvalvontavaltakirja — maksuton pohja">
+<meta property="og:description" content="Täytä suomalainen edunvalvontavaltakirja selaimessa, valitse tilanteeseesi sopivat vaihtoehdot ja lataa Word-, PDF- tai tekstitiedostona. Maksuton, ei tallenna mitään palvelimelle.">
+<meta property="og:url" content="https://miikkunainen.github.io/personal/edunvalvontavaltakirja-generaattori.html">
+<meta property="og:image" content="https://miikkunainen.github.io/personal/edunvalvontavaltakirja-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="fi_FI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Edunvalvontavaltakirja — maksuton pohja">
+<meta name="twitter:description" content="Täytä suomalainen edunvalvontavaltakirja selaimessa ja lataa Word-, PDF- tai tekstitiedostona. Maksuton.">
+<meta name="twitter:image" content="https://miikkunainen.github.io/personal/edunvalvontavaltakirja-og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=Newsreader:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -67,6 +80,34 @@
   .skip-link{position:absolute; left:-999px; top:0; background:var(--ink); color:var(--paper); padding:.6em 1em; z-index:200;}
   .skip-link:focus{left:8px; top:8px;}
 
+  /* ---------- In-app browser banner ---------- */
+  .inapp-banner{
+    background:var(--brick); color:#fff; font-family:var(--font-ui);
+    position:relative; z-index:70;
+  }
+  .inapp-banner[hidden]{display:none;}
+  .inapp-banner__inner{
+    max-width:1180px; margin:0 auto; padding:12px 20px;
+    display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap;
+  }
+  .inapp-banner__icon{font-size:1.1rem; line-height:1.3;}
+  .inapp-banner__text{flex:1 1 320px; font-size:.86rem; line-height:1.5;}
+  .inapp-banner__text strong{display:block; margin-bottom:2px;}
+  .inapp-banner__actions{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .inapp-banner__actions button{
+    font-family:var(--font-ui); font-size:.8rem; font-weight:600;
+    background:#fff; color:var(--brick); border:none; border-radius:100px;
+    padding:7px 14px; cursor:pointer;
+  }
+  .inapp-banner__dismiss{
+    background:transparent !important; color:#fff !important; padding:6px !important;
+    font-size:1rem; font-weight:400 !important; min-width:28px;
+  }
+  @media (max-width:640px){
+    .inapp-banner__inner{padding:10px 14px;}
+    .inapp-banner__text{font-size:.82rem;}
+  }
+
   /* ---------- Toolbar ---------- */
   .toolbar{
     position:sticky; top:0; z-index:50;
@@ -96,6 +137,7 @@
     background:var(--paper-raised); color:var(--ink);
     border:1px solid var(--rule); border-radius:var(--radius);
     padding:6px 10px; cursor:pointer;
+    min-height:34px;
   }
   .toolbar select:focus-visible, .toolbar button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, details summary:focus-visible{
     outline:2px solid var(--gold); outline-offset:2px;
@@ -140,14 +182,11 @@
     display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:34px;
     align-items:start;
   }
-  @media (max-width: 900px){
-    .layout{grid-template-columns:1fr; padding:18px 14px 60px;}
-    .marginalia{display:none;}
-  }
 
   /* ---------- Document paper ---------- */
   .paper{
     background:var(--paper-raised);
+
     border:1px solid var(--rule);
     border-radius:6px;
     box-shadow:var(--shadow);
@@ -233,7 +272,6 @@
 
   .sig-block{display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-top:26px;}
   .sig-line{border-top:1px solid var(--ink-soft); padding-top:6px; font-family:var(--font-ui); font-size:.76rem; color:var(--ink-soft); min-height:44px;}
-  @media (max-width:560px){.sig-block{grid-template-columns:1fr;}}
 
   .details-guide{margin-top:12px;}
   .details-guide summary{
@@ -244,7 +282,6 @@
   .details-guide summary::before{content:"§"; font-family:var(--font-display);}
   .details-guide[open] summary{margin-bottom:6px;}
   .details-guide .guide-body{font-family:var(--font-ui); font-size:.82rem; color:var(--ink-soft); line-height:1.6; padding:8px 0 4px;}
-  @media (min-width:901px){.details-guide{display:none;}}
 
   /* ---------- Marginalia ---------- */
   .marginalia{position:sticky; top:78px; font-family:var(--font-ui);}
@@ -268,7 +305,6 @@
     font-family:var(--font-ui); font-size:.82rem; color:var(--ink-soft);
   }
   .footer-grid{display:grid; grid-template-columns:2fr 1fr; gap:30px; border-top:1px solid var(--rule); padding-top:26px;}
-  @media (max-width:700px){.footer-grid{grid-template-columns:1fr;}}
   .footer-grid h4{font-family:var(--font-ui); color:var(--ink); margin:0 0 8px; font-size:.82rem;}
   .support-card{
     background:var(--paper-raised); border:1px solid var(--rule); border-radius:6px; padding:16px;
@@ -284,8 +320,73 @@
 
   /* ---------- Print ---------- */
   #print-doc{display:none;}
+
+  /* ============ RESPONSIVE TIERS ============
+     Desktop:  >= 1025px  (two-column layout, sticky marginalia)
+     Tablet:   641px–1024px (single column, inline §-ohjeet, toolbar wraps to 2 rows)
+     Mobile:   <= 640px  (single column, larger touch targets, compact toolbar)
+     ============================================ */
+
+  /* --- Tablet and Mobile share: collapse to single column --- */
+  @media (max-width: 1024px){
+    .layout{grid-template-columns:1fr; padding:20px 16px 60px; gap:0;}
+    .marginalia{display:none;}
+  }
+  @media (min-width: 1025px){
+    .details-guide{display:none;}
+  }
+
+  /* --- Tablet tuning (641–1024px) --- */
+  @media (max-width: 1024px) and (min-width: 641px){
+    .toolbar{padding:10px 16px; gap:10px 16px;}
+    .hero{padding:28px 16px 4px;}
+    .paper__inner{padding:36px clamp(20px,4vw,48px) 48px;}
+    .footer-grid{gap:24px;}
+  }
+
+  /* --- Mobile tuning (<= 640px) --- */
+  @media (max-width: 640px){
+    body{font-size:calc(15.5px * var(--font-scale));}
+    .toolbar{
+      padding:10px 12px; gap:8px 10px;
+      justify-content:space-between;
+    }
+    .toolbar__brand{font-size:.9rem; margin-right:0; flex:1 1 100%; order:1;}
+    .toolbar__group{order:3; flex:1 1 auto; min-width:0;}
+    .toolbar__group label{display:none;}
+    .toolbar select{flex:1; min-width:0; width:100%;}
+    #btn-copy{order:4;}
+    .menu{order:5; flex:1 1 100%; width:100%;}
+    .toolbar select, .toolbar button{min-height:40px; font-size:.86rem;}
+    .menu__panel{left:0; right:0; width:auto; max-width:none; min-width:0;}
+
+    .hero{padding:22px 14px 4px;}
+    .hero h1{font-size:1.6rem;}
+    .hero p.lead{font-size:.95rem;}
+    .hero__meta{gap:10px;}
+    .pill{font-size:.76rem; padding:5px 10px;}
+
+    .paper{border-radius:4px;}
+    .paper__inner{padding:28px 16px 40px;}
+    .doc-title{font-size:1.35rem;}
+
+    .field-row{gap:14px 12px;}
+    .field input, .field select, .field textarea{font-size:1rem;}
+    .field select{min-height:42px;}
+
+    .sig-block{grid-template-columns:1fr; gap:24px;}
+    .footer-grid{grid-template-columns:1fr; gap:22px;}
+
+    .add-btn, .icon-btn{min-height:40px;}
+    .icon-btn{width:40px;}
+    .kohde-row{gap:10px;}
+
+    .support-card a.btn-donate{width:100%; text-align:center; padding:12px 16px;}
+  }
+
+
   @media print{
-    .toolbar, .hero, .marginalia, .site-footer, .details-guide, .add-btn, .icon-btn, .kohde-row .icon-btn{display:none !important;}
+    .toolbar, .hero, .marginalia, .site-footer, .details-guide, .add-btn, .icon-btn, .kohde-row .icon-btn, .inapp-banner{display:none !important;}
     body{background:#fff;}
     .layout{display:block; padding:0;}
     .paper{display:none;}
@@ -352,6 +453,21 @@
       <span class="hint">Muualle</span>
       <button type="button" data-action="mail">Lähetä sähköpostiin</button>
       <button type="button" data-action="gdocs">Kopioi Google Docsiin</button>
+    </div>
+  </div>
+</div>
+
+<div id="inapp-banner" class="inapp-banner" role="alert" hidden>
+  <div class="inapp-banner__inner">
+    <span class="inapp-banner__icon" aria-hidden="true">⚠</span>
+    <div class="inapp-banner__text">
+      <strong id="inapp-banner-title">Avasit tämän sovelluksen sisäisessä selaimessa.</strong>
+      <span id="inapp-banner-body">Osa toiminnoista (PDF-tulostus, tiedostojen lataus, kopiointi) ei välttämättä toimi luotettavasti täällä. Avaa sivu puhelimesi omassa selaimessa (Safari/Chrome) parhaan kokemuksen saamiseksi.</span>
+    </div>
+    <div class="inapp-banner__actions">
+      <button type="button" id="inapp-copy-link">Kopioi linkki</button>
+      <button type="button" id="inapp-share" hidden>Jaa / avaa selaimessa</button>
+      <button type="button" id="inapp-dismiss" class="inapp-banner__dismiss" aria-label="Sulje ilmoitus">✕</button>
     </div>
   </div>
 </div>
@@ -604,7 +720,7 @@
     </div>
     <div class="support-card">
       <h4>Tue tekijää</h4>
-      <p>Työkalu on ja pysyy maksuttomana. Jos se oli avuksi, voit halutessasi jättää 5 € kiitokseksi.</p>
+      <p>Työkalu on ja pysyy maksuttomana. Jos se oli avuksi, voit halutessasi jättää 5 € kiitokseksi. Pienikin tuki auttaa kattamaan ohjelmistomaksuja ja palvelinkuluja sekä mahdollistaa vapaa-ajalla tehtävien työkalujen kehityksen jatkossakin.</p>
       <a class="btn-donate" id="donate-link" href="#" target="_blank" rel="noopener">Tue 5 € →</a>
     </div>
   </div>
@@ -615,6 +731,64 @@
 <script>
 (function(){
   "use strict";
+
+  // ---------- In-app browser detection ----------
+  // Facebook, Instagram, Messenger, LinkedIn, TikTok, Line, WeChat and generic Android WebViews
+  // are known to silently restrict window.print(), file downloads and the Clipboard API.
+  // We can't reliably detect *failure* of those APIs after the fact (most fail silently),
+  // so the honest approach is to warn proactively based on the user agent.
+  function detectInAppBrowser(){
+    const ua = navigator.userAgent || '';
+    const patterns = [
+      { re: /FBAN|FBAV|FB_IAB/i, name: 'Facebook' },
+      { re: /Instagram/i, name: 'Instagram' },
+      { re: /Line\//i, name: 'LINE' },
+      { re: /MicroMessenger/i, name: 'WeChat' },
+      { re: /LinkedInApp/i, name: 'LinkedIn' },
+      { re: /TikTok|musical_ly/i, name: 'TikTok' },
+      { re: /Snapchat/i, name: 'Snapchat' },
+      { re: /; ?wv\)/i, name: null } // generic Android WebView marker (no dedicated share-sheet UX)
+    ];
+    for(const p of patterns){
+      if(p.re.test(ua)) return { matched:true, name:p.name };
+    }
+    return { matched:false, name:null };
+  }
+
+  function initInAppBanner(){
+    const result = detectInAppBrowser();
+    if(!result.matched) return;
+    const banner = document.getElementById('inapp-banner');
+    const titleEl = document.getElementById('inapp-banner-title');
+    titleEl.textContent = result.name
+      ? 'Avasit tämän ' + result.name + '-sovelluksen sisäisessä selaimessa.'
+      : 'Avasit tämän sovelluksen sisäisessä selaimessa.';
+    banner.hidden = false;
+
+    document.getElementById('inapp-dismiss').addEventListener('click', ()=>{ banner.hidden = true; });
+
+    document.getElementById('inapp-copy-link').addEventListener('click', async (e)=>{
+      const url = location.href;
+      const btn = e.currentTarget;
+      const old = btn.textContent;
+      try{
+        await navigator.clipboard.writeText(url);
+        btn.textContent = 'Kopioitu ✓';
+      }catch(err){
+        // Clipboard API itself can be restricted in-app; fall back to a manual-select prompt
+        window.prompt('Kopioi linkki manuaalisesti:', url);
+      }
+      setTimeout(()=>btn.textContent = old, 1800);
+    });
+
+    if(navigator.share){
+      const shareBtn = document.getElementById('inapp-share');
+      shareBtn.hidden = false;
+      shareBtn.addEventListener('click', ()=>{
+        navigator.share({ title: document.title, url: location.href }).catch(()=>{});
+      });
+    }
+  }
 
   // ---------- Donation link ----------
   // PayPal-maksulinkki tekijän tukemiseen (vapaaehtoinen)
@@ -898,7 +1072,7 @@
   }
 
   document.querySelectorAll('[data-action]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const action = btn.dataset.action;
       if(action==='txt'){
         download('edunvalvontavaltakirja.txt', toPlainText(), 'text/plain;charset=utf-8');
@@ -907,7 +1081,12 @@
         download('edunvalvontavaltakirja.doc', htmlDoc, 'application/msword');
       } else if(action==='pdf'){
         document.getElementById('print-doc').innerHTML = toHTML();
-        window.print();
+        // Small delay ensures the browser has committed layout for the freshly-injected
+        // content before print() captures it — matters more on some mobile rendering engines
+        // than on desktop, where print() can otherwise fire before paint.
+        requestAnimationFrame(()=>{
+          setTimeout(()=>{ window.print(); }, 50);
+        });
       } else if(action==='mail'){
         const body = toPlainText();
         const SAFE_LIMIT = 800; // conservative: mailto bodies get URL-encoded (äöå etc. expand 3-9x) and many mail clients/OS handlers cap total mailto length around 2000 chars
@@ -919,8 +1098,17 @@
         }
         window.location.href = 'mailto:?subject='+encodeURIComponent('Edunvalvontavaltakirja - luonnos')+'&body='+encodeURIComponent(mailBody);
       } else if(action==='gdocs'){
-        copyRich();
-        window.open('https://docs.google.com/document/create', '_blank', 'noopener');
+        // IMPORTANT: must await the copy and confirm it actually succeeded BEFORE opening
+        // a new tab. Opening a new tab shifts browser focus away from this page, and if that
+        // happens while navigator.clipboard.write() is still pending, many browsers silently
+        // abort the write — the new Google Doc opens but the clipboard ends up empty.
+        const ok = await copyRich();
+        if(ok){
+          alert('Sisältö kopioitu leikepöydälle.\n\nAvautuvaan Google-dokumenttiin: liitä sisältö painamalla Ctrl+V (Windows) tai Cmd+V (Mac).');
+          window.open('https://docs.google.com/document/create', '_blank', 'noopener');
+        } else {
+          alert('Kopiointi leikepöydälle ei onnistunut automaattisesti (selaimesi saattaa estää sen). Käytä sen sijaan yläpalkin "Kopioi"-painiketta, tai lataa asiakirja Word- tai tekstitiedostona.');
+        }
       }
       document.getElementById('export-menu').classList.remove('open');
     });
@@ -956,10 +1144,28 @@
   // ---------- Menu toggle ----------
   const menu = document.getElementById('export-menu');
   const toggle = document.getElementById('export-toggle');
+  const menuPanel = menu.querySelector('.menu__panel');
+  function clampMenuPanel(){
+    if(window.innerWidth <= 640) return; // mobile tier already spans full width via CSS
+    menuPanel.style.left = '';
+    menuPanel.style.right = '0';
+    const r = menuPanel.getBoundingClientRect();
+    const margin = 8;
+    if(r.left < margin){
+      menuPanel.style.right = 'auto';
+      menuPanel.style.left = (-(r.left) + margin) + 'px';
+    }
+    const r2 = menuPanel.getBoundingClientRect();
+    if(r2.right > window.innerWidth - margin){
+      menuPanel.style.left = '';
+      menuPanel.style.right = '0';
+    }
+  }
   toggle.addEventListener('click', (e)=>{
     e.stopPropagation();
     menu.classList.toggle('open');
     toggle.setAttribute('aria-expanded', menu.classList.contains('open'));
+    if(menu.classList.contains('open')) requestAnimationFrame(clampMenuPanel);
   });
   document.addEventListener('click', (e)=>{ if(!menu.contains(e.target)) menu.classList.remove('open'); });
   document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') menu.classList.remove('open'); });
@@ -1010,6 +1216,7 @@
   updateText();
   updateProgress();
   setGuide('intro');
+  initInAppBanner();
 })();
 </script>
 </body>
