@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rauta, ajoitus ja hoitomuoto — laaja vuorovaikutteinen malli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F1F3EE; --paper-deep:#E7EBE3; --ink:#16283F; --ink-soft:#48586B; --line:#D7DCD1;
+    --teal:#3E7C74; --teal-deep:#2A5A54; --rust:#B2532E; --rust-soft:#F3E3DA; --teal-soft:#DEEBE7;
+    --gold:#A9812F; --gold-soft:#F1E7CE; --card:#FFFFFF; --violet:#5B4E77; --violet-soft:#E9E5F0;
+    --shadow:0 2px 4px rgba(22,40,63,.05),0 10px 30px rgba(22,40,63,.06);
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--paper); color:var(--ink); font-family:"Inter",-apple-system,sans-serif; line-height:1.6; }
+  svg{ display:block; max-width:100%; }
+  .serif{ font-family:"Fraunces",serif; }
+  .mono{ font-family:"IBM Plex Mono",monospace; }
+  header{ padding:56px 6vw 26px; text-align:center; }
+  header .eyebrow{ font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--rust); margin-bottom:14px; }
+  header h1{ font-family:"Fraunces",serif; font-size:clamp(24px,4.2vw,40px); margin:0 0 14px; max-width:24ch; margin-left:auto; margin-right:auto; }
+  header p{ max-width:62ch; margin:0 auto; color:var(--ink-soft); font-size:16px; }
+
+  .warn{
+    max-width:760px; margin:24px auto 0; background:var(--gold-soft); border-left:3px solid var(--gold);
+    border-radius:0 10px 10px 0; padding:16px 20px; font-size:13.5px; color:#6b5220; text-align:left;
+  }
+  .warn b{ color:#4a3814; }
+
+  main{ max-width:1160px; margin:0 auto; padding:36px 6vw 100px; }
+
+  .controls{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:26px; box-shadow:var(--shadow); margin-bottom:30px; }
+  .controls h2{ font-family:"Fraunces",serif; font-size:19px; margin:0 0 4px; text-align:center; }
+  .controls .sub{ text-align:center; font-size:13px; color:var(--ink-soft); margin-bottom:20px; }
+
+  /* MODE selector — the big lever */
+  .mode-row{ display:flex; gap:10px; margin-bottom:22px; flex-wrap:wrap; justify-content:center; }
+  .mode-btn{
+    flex:1 1 220px; max-width:280px; text-align:left; cursor:pointer; border:2px solid var(--line);
+    border-radius:12px; padding:14px 16px; background:#fff; transition:.15s;
+  }
+  .mode-btn .t{ font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; }
+  .mode-btn h4{ font-family:"Fraunces",serif; margin:4px 0 3px; font-size:16px; }
+  .mode-btn p{ margin:0; font-size:12px; color:var(--ink-soft); }
+  .mode-btn.active{ border-color:var(--teal-deep); background:var(--teal-soft); }
+  .mode-btn.active h4{ color:var(--teal-deep); }
+
+  .ctrl-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:18px; }
+  .ctrl{ background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; transition:opacity .2s; }
+  .ctrl.disabled{ opacity:.35; pointer-events:none; }
+  .ctrl label{ display:block; font-size:12.5px; font-weight:600; margin-bottom:8px; }
+  .ctrl .val{ font-family:"IBM Plex Mono",monospace; color:var(--teal-deep); font-weight:600; }
+  .ctrl input[type=range]{ width:100%; accent-color:var(--teal-deep); }
+  .toggle-row{ display:flex; align-items:center; justify-content:space-between; font-size:13px; margin-top:6px; }
+  .switch{ position:relative; width:38px; height:21px; flex-shrink:0; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .slider-tog{ position:absolute; cursor:pointer; inset:0; background:#c9d0c2; border-radius:22px; transition:.2s; }
+  .slider-tog:before{ content:""; position:absolute; width:15px; height:15px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; }
+  input:checked + .slider-tog{ background:var(--teal-deep); }
+  input:checked + .slider-tog:before{ transform:translateX(17px); }
+  .seg{ display:flex; gap:5px; margin-top:4px; }
+  .seg button{ flex:1; font-family:"IBM Plex Mono",monospace; font-size:11px; padding:6px 4px; border-radius:7px; border:1px solid var(--line); background:#fff; color:var(--ink-soft); cursor:pointer; }
+  .seg button.active{ background:var(--teal-deep); color:#fff; border-color:var(--teal-deep); }
+  .ctrl-note{ font-size:11px; color:var(--ink-soft); margin-top:8px; font-style:italic; }
+
+  .diagrams{ display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-bottom:22px; }
+  @media (max-width:900px){ .diagrams{ grid-template-columns:1fr; } }
+  .diagram-card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; box-shadow:var(--shadow); }
+  .diagram-card.wide{ grid-column:1 / -1; }
+  .diagram-card h3{ font-family:"Fraunces",serif; font-size:16.5px; margin:0 0 3px; }
+  .diagram-card .cap{ font-size:12px; color:var(--ink-soft); margin-bottom:12px; }
+
+  .readout{ display:flex; gap:18px; flex-wrap:wrap; margin-top:12px; font-family:"IBM Plex Mono",monospace; font-size:12px; }
+  .readout span b{ display:block; font-size:19px; color:var(--ink); }
+  .readout span{ color:var(--ink-soft); }
+
+  .score-bar{ height:16px; border-radius:9px; background:var(--paper-deep); overflow:hidden; margin:10px 0 4px; border:1px solid var(--line); }
+  .score-fill{ height:100%; background:linear-gradient(90deg,var(--rust),var(--gold) 55%,var(--teal-deep)); transition:width .3s; }
+
+  .legend{ display:flex; gap:14px; font-size:11.5px; color:var(--ink-soft); margin-top:14px; flex-wrap:wrap; }
+  .legend span{ display:flex; align-items:center; gap:5px; }
+  .legend i{ width:14px; height:3px; border-radius:2px; display:inline-block; }
+  .legend i.dash{ background-image:linear-gradient(90deg,var(--gold) 60%,transparent 40%); background-size:8px 3px; }
+
+  .interdep{ background:var(--teal-soft); border-radius:14px; padding:20px 24px; margin-top:4px; font-size:14px; color:#1e3f3a; }
+  .interdep b{ color:var(--teal-deep); }
+
+  .iv-note{ background:var(--violet-soft); border-radius:14px; padding:18px 22px; margin-top:14px; font-size:13.5px; color:#3a3153; }
+  .iv-note b{ color:var(--violet); }
+
+  .ref-card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:24px; box-shadow:var(--shadow); }
+  .ref-card h3{ font-family:"Fraunces",serif; font-size:17px; margin:0 0 4px; }
+  .ref-card .cap{ font-size:12px; color:var(--ink-soft); margin-bottom:14px; }
+  .ref-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:700px){ .ref-grid{ grid-template-columns:1fr; } }
+  .ref-block h5{ font-family:"IBM Plex Mono",monospace; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--violet); margin:0 0 6px; }
+  .ref-block ul{ margin:0; padding-left:18px; }
+  .ref-block li{ font-size:13px; color:var(--ink-soft); margin-bottom:5px; }
+
+  footer{ text-align:center; padding:40px 6vw 70px; color:var(--ink-soft); font-size:12.5px; border-top:1px solid var(--line); margin-top:26px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Laaja vuorovaikutteinen malli</div>
+  <h1>Rauta, ajoitus ja hoitomuoto — mistä lopputulos oikeasti riippuu.</h1>
+  <p>Vaihda hoitomuotoa, taudin vaikeusastetta ja arjen tekijöitä — kaikki neljä alla olevaa paneelia päivittyvät yhdessä, jotta suurten hoitopäätösten (esim. suun kautta vs. suonensisäinen rauta) vaikutus näkyy suoraan.</p>
+  <div class="warn"><b>Tämä on yleinen, havainnollistava malli</b> tunnetuista fysiologisista mekanismeista — ei kenenkään henkilökohtaisen tilanteen ennuste, laskuri tai hoitosuositus. Käyrien muoto ja pisteytys ovat suuntaa-antavia. Se, onko suonensisäinen rauta aiheellinen, on aina hoitavan lääkärin arvio — malli näyttää vain, miksi hoitomuodolla on väliä fysiologian tasolla.</div>
+</header>
+
+<main>
+
+  <div class="controls">
+    <h2>1. Hoitomuoto — suurin yksittäinen vipu</h2>
+    <div class="sub">Tämä valinta muuttaa muiden säätimien merkitystä alla</div>
+    <div class="mode-row" id="modeRow">
+      <div class="mode-btn active" data-mode="daily">
+        <div class="t">Suun kautta</div>
+        <h4>Joka päivä</h4>
+        <p>Hepsidiini rajoittaa jokaista toista annosta.</p>
+      </div>
+      <div class="mode-btn" data-mode="altday">
+        <div class="t">Suun kautta</div>
+        <h4>Joka toinen päivä</h4>
+        <p>Hepsidiini ehtii laskea annosten välissä.</p>
+      </div>
+      <div class="mode-btn" data-mode="iv">
+        <div class="t">Suonensisäinen</div>
+        <h4>IV-infuusio</h4>
+        <p>Ohittaa suoliston imeytymisportin kokonaan.</p>
+      </div>
+    </div>
+
+    <h2>2. Tilanne ja arjen tekijät</h2>
+    <div class="sub">Osa säätimistä sammuu, kun ne eivät ole hoitomuodon kannalta relevantteja</div>
+    <div class="ctrl-grid">
+
+      <div class="ctrl">
+        <label>Lähtötilanteen vakavuus</label>
+        <div class="seg" id="sevSeg">
+          <button data-v="0.7">Lievä</button>
+          <button data-v="1" class="active">Kohtalainen</button>
+          <button data-v="1.4">Vaikea</button>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <label>Hoitoon sitoutuminen: <span class="val mono" id="outAdh">90 %</span></label>
+        <input type="range" id="adherence" min="40" max="100" step="5" value="90">
+        <div class="ctrl-note" id="adhNote"></div>
+      </div>
+
+      <div class="ctrl" id="malaCtrl">
+        <div class="toggle-row"><span>Suoliston imeytymishäiriö taustalla (esim. keliakia/IBD)</span>
+          <label class="switch"><input type="checkbox" id="malabs"><span class="slider-tog"></span></label>
+        </div>
+        <div class="ctrl-note">Heikentää suun kautta otetun raudan tehoa merkittävästi.</div>
+      </div>
+
+      <div class="ctrl" id="ctrlTime">
+        <label>Annosaika: <span class="val mono" id="outTime">08:00</span></label>
+        <input type="range" id="doseTime" min="5" max="21" step="1" value="8">
+      </div>
+
+      <div class="ctrl" id="ctrlCa">
+        <label>Kalsium annoksen läheisyydessä: <span class="val mono" id="outCa">0 h etäisyys</span></label>
+        <input type="range" id="calciumGap" min="0" max="4" step="0.5" value="0">
+      </div>
+
+      <div class="ctrl" id="ctrlToggles1">
+        <div class="toggle-row"><span>Kahvia/teetä lähellä annosta</span>
+          <label class="switch"><input type="checkbox" id="caffeine"><span class="slider-tog"></span></label>
+        </div>
+        <div class="toggle-row" style="margin-top:12px;"><span>C-vitamiinia mukana</span>
+          <label class="switch"><input type="checkbox" id="vitc" checked><span class="slider-tog"></span></label>
+        </div>
+      </div>
+
+      <div class="ctrl" id="ctrlHeme">
+        <label>Hemirautaa ruokavaliossa: <span class="val mono" id="outHeme">3 x / vko</span></label>
+        <input type="range" id="hemeFreq" min="0" max="7" step="1" value="3">
+      </div>
+
+      <div class="ctrl" id="ctrlToggles2">
+        <div class="toggle-row"><span>Runsaasti tanniineja päivittäin</span>
+          <label class="switch"><input type="checkbox" id="tannin"><span class="slider-tog"></span></label>
+        </div>
+        <div class="toggle-row" style="margin-top:12px;"><span>Jaettu annos (aamu+ilta)</span>
+          <label class="switch"><input type="checkbox" id="split"><span class="slider-tog"></span></label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="diagrams">
+
+    <div class="diagram-card">
+      <h3 id="chart1Title">1 · Hepsidiini 72 tunnin ikkunassa</h3>
+      <div class="cap" id="chart1Cap">Näyttää, milloin suoliston imeytymisreitti on auki vs. suljettu</div>
+      <svg viewBox="0 0 480 200" width="100%" style="aspect-ratio:480/200;" id="oralChart">
+        <line x1="34" y1="170" x2="470" y2="170" stroke="#D7DCD1"/>
+        <line x1="34" y1="10" x2="34" y2="170" stroke="#D7DCD1"/>
+        <text x="4" y="18" class="mono" font-size="9" fill="#48586B">korkea</text>
+        <text x="4" y="168" class="mono" font-size="9" fill="#48586B">matala</text>
+        <text x="200" y="192" class="mono" font-size="9" fill="#48586B">tunteja (0–72h)</text>
+        <path id="hepPath" d="" fill="none" stroke="#B2532E" stroke-width="2.5"/>
+        <g id="doseMarkers"></g>
+      </svg>
+      <svg viewBox="0 0 480 200" width="100%" style="aspect-ratio:480/200;display:none;" id="ivChart">
+        <rect x="34" y="60" width="90" height="70" rx="8" fill="#EDEAF3" stroke="#5B4E77"/>
+        <text x="45" y="99" class="mono" font-size="11" fill="#3a3153">Infuusio</text>
+        <line x1="124" y1="95" x2="230" y2="95" stroke="#5B4E77" stroke-width="3" marker-end="url(#arrow)"/>
+        <rect x="234" y="60" width="110" height="70" rx="8" fill="#DEEBE7" stroke="#2A5A54"/>
+        <text x="246" y="90" class="mono" font-size="11" fill="#1e3f3a">Verenkierto</text>
+        <text x="246" y="106" class="mono" font-size="9" fill="#1e3f3a">(suora)</text>
+        <line x1="344" y1="95" x2="440" y2="95" stroke="#2A5A54" stroke-width="3" marker-end="url(#arrow2)"/>
+        <text x="360" y="60" class="mono" font-size="10" fill="#48586B">kudokset</text>
+        <text x="34" y="150" class="mono" font-size="9.5" fill="#48586B">Suoliston hepsidiiniportti ohitetaan —</text>
+        <text x="34" y="163" class="mono" font-size="9.5" fill="#48586B">imeytymisen aikaraja ei rajoita annosta</text>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5B4E77"/></marker>
+          <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2A5A54"/></marker>
+        </defs>
+      </svg>
+      <div class="legend" id="chart1Legend"><span><i style="background:#B2532E"></i>Hepsidiinitaso</span><span id="hepNote" class="mono"></span></div>
+    </div>
+
+    <div class="diagram-card">
+      <h3 id="chart2Title">2 · Suoliston imeytymispotentiaali</h3>
+      <div class="cap">Kaikkien relevanttien valintojen yhteisvaikutus</div>
+      <div class="score-bar"><div class="score-fill" id="scoreFill" style="width:50%"></div></div>
+      <div class="readout">
+        <span>Pisteet<b id="scoreNum" class="mono">50</b></span>
+        <span>Tulkinta<b id="scoreWord">Kohtalainen</b></span>
+      </div>
+      <div id="scoreBreak" style="margin-top:14px; font-size:12.5px; color:var(--ink-soft);"></div>
+    </div>
+
+    <div class="diagram-card wide">
+      <h3>3 · Illustratiivinen 12 viikon trendi</h3>
+      <div class="cap">Hb ja ferritiini suhteellisella asteikolla — muoto reagoi kaikkiin yllä oleviin valintoihin, mukaan lukien hoitomuoto. Ei todellisia mitattuja arvoja.</div>
+      <svg viewBox="0 0 900 220" width="100%" style="aspect-ratio:900/220;">
+        <line x1="40" y1="190" x2="880" y2="190" stroke="#D7DCD1"/>
+        <line x1="40" y1="10" x2="40" y2="190" stroke="#D7DCD1"/>
+        <text x="10" y="18" class="mono" font-size="10" fill="#48586B">korkea</text>
+        <text x="10" y="188" class="mono" font-size="10" fill="#48586B">matala</text>
+        <text x="420" y="212" class="mono" font-size="10" fill="#48586B">viikkoja (0–12)</text>
+        <path id="hbPath" d="" fill="none" stroke="#2A5A54" stroke-width="3"/>
+        <path id="ferPath" d="" fill="none" stroke="#A9812F" stroke-width="3" stroke-dasharray="6 5"/>
+      </svg>
+      <div class="legend">
+        <span><i style="background:#2A5A54"></i>Hemoglobiini (oireiden mittari)</span>
+        <span><i class="dash"></i>Ferritiini (varastojen mittari)</span>
+      </div>
+      <div class="iv-note" id="ivNote" style="display:none;">
+        <b>Miksi ferritiini "hyppää" heti IV-infuusion jälkeen:</b> suonensisäisen raudan jälkeen ferritiini nousee nopeasti (huippu n. 7–9 vrk kohdalla), mutta tämä on suurelta osin ohimenevä, väliaikaisiin rauta-kompleksijäämiin ja makrofagien varastointiin liittyvä ilmiö — ei suoraan todellisia, käytettävissä olevia varastoja. Kliinisesti luotettava ferritiinimittaus tehdään vasta 4–8 viikon kuluttua infuusiosta. Hemoglobiini nousee tyypillisesti luotettavammin jo 2–3 viikossa.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="interdep" id="interdepText">Säädä valintoja yllä nähdäksesi, miten ne kytkeytyvät toisiinsa.</div>
+
+  <div class="ref-card" style="margin-top:22px;">
+    <h3>4 · Milloin suonensisäistä rautaa yleensä harkitaan</h3>
+    <div class="cap">Yleiset kliiniset kriteerit — ei tämän tilanteen henkilökohtainen arvio. Päätöksen tekee aina hoitava lääkäri.</div>
+    <div class="ref-grid">
+      <div class="ref-block">
+        <h5>Oraalinen hoito ei toimi</h5>
+        <ul>
+          <li>Ei siedä vähintään kahta eri suun kautta otettavaa rautavalmistetta</li>
+          <li>Hb ei nouse riittävästi (esim. alle 1 g/dL) 2 viikon kuluessa</li>
+          <li>Ferritiini pysyy matalana kuukauden säännöllisen, oikein otetun hoidon jälkeen</li>
+        </ul>
+      </div>
+      <div class="ref-block">
+        <h5>Tilanne vaatii nopeutta tai imeytyminen on estynyt</h5>
+        <ul>
+          <li>Aktiivinen tulehduksellinen suolistosairaus ja Hb alle 10 g/dL</li>
+          <li>Leikkauksen jälkeinen tila (esim. mahalaukun ohitusleikkaus)</li>
+          <li>Tarve nopealle korjaukselle (esim. ennen leikkausta, oireinen vaikea anemia)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Havainnollistava malli tunnetuista fysiologisista mekanismeista (hepsidiinin kinetiikka, imeytymisen estäjät/tehostajat, suonensisäisen raudan farmakokinetiikka). Ei henkilökohtainen ennuste, laskuri tai hoitosuositus — todelliset arvot ja hoitomuodon valinta aina hoitavan lääkärin kanssa.
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+
+let state = {
+  mode: 'daily',
+  severity: 1,
+  adherence: 90,
+  malabs: false,
+  doseTime: 8, interval: 24, calciumGap: 0, caffeine: false, vitc: true,
+  hemeFreq: 3, tannin: false, split: false
+};
+
+// ---- mode selector ----
+document.querySelectorAll('.mode-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    state.mode = b.dataset.mode;
+    state.interval = state.mode === 'altday' ? 48 : 24;
+    updateVisibility();
+    render();
+  });
+});
+
+function updateVisibility(){
+  const isIV = state.mode === 'iv';
+  ['ctrlTime','ctrlCa','ctrlToggles1','ctrlHeme','ctrlToggles2','malaCtrl'].forEach(id=>{
+    $(id).classList.toggle('disabled', isIV && id!=='ctrlHeme' ? true : (isIV));
+  });
+  // heme diet still shown but marked less relevant for IV; keep simple: disable all oral-specific when IV
+  ['ctrlTime','ctrlCa','ctrlToggles1','ctrlHeme','ctrlToggles2','malaCtrl'].forEach(id=>{
+    $(id).classList.toggle('disabled', isIV);
+  });
+  $('oralChart').style.display = isIV ? 'none' : 'block';
+  $('ivChart').style.display = isIV ? 'block' : 'none';
+  $('chart1Title').textContent = isIV ? '1 · Suora reitti verenkiertoon' : '1 · Hepsidiini 72 tunnin ikkunassa';
+  $('chart1Cap').textContent = isIV ? 'IV-rauta ohittaa suoliston hepsidiiniportin kokonaan' : 'Näyttää, milloin suoliston imeytymisreitti on auki vs. suljettu';
+  $('chart1Legend').style.display = isIV ? 'none' : 'flex';
+  $('chart2Title').textContent = isIV ? '2 · Kudosten rautasaatavuus' : '2 · Suoliston imeytymispotentiaali';
+  $('ivNote').style.display = isIV ? 'block' : 'none';
+  const adh = $('adhNote');
+  adh.textContent = isIV ? 'IV annetaan valvotusti klinikalla — annos toteutuu suunnitellusti riippumatta arjen sitoutumisesta.' : 'Kuvaa, kuinka säännöllisesti annokset todella otetaan suunnitellusti.';
+}
+
+// ---- other controls ----
+document.querySelectorAll('#sevSeg button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('#sevSeg button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); state.severity = +b.dataset.v; render();
+  });
+});
+$('adherence').addEventListener('input', e=>{ state.adherence=+e.target.value; $('outAdh').textContent=state.adherence+' %'; render(); });
+$('malabs').addEventListener('change', e=>{ state.malabs=e.target.checked; render(); });
+$('doseTime').addEventListener('input', e=>{ state.doseTime=+e.target.value; $('outTime').textContent=String(state.doseTime).padStart(2,'0')+':00'; render(); });
+$('calciumGap').addEventListener('input', e=>{ state.calciumGap=+e.target.value; $('outCa').textContent=state.calciumGap+' h etäisyys'; render(); });
+$('caffeine').addEventListener('change', e=>{ state.caffeine=e.target.checked; render(); });
+$('vitc').addEventListener('change', e=>{ state.vitc=e.target.checked; render(); });
+$('hemeFreq').addEventListener('input', e=>{ state.hemeFreq=+e.target.value; $('outHeme').textContent=state.hemeFreq+' x / vko'; render(); });
+$('tannin').addEventListener('change', e=>{ state.tannin=e.target.checked; render(); });
+$('split').addEventListener('change', e=>{ state.split=e.target.checked; render(); });
+
+// ---- diagram 1: hepcidin (oral only) ----
+function hepcidinAt(t, doses){
+  let v = 0.12;
+  doses.forEach(td=>{ const x=t-td; if(x>=0) v += 0.85*(x/(1+x))*Math.exp(-x/13); });
+  return Math.min(v, 1.05);
+}
+function buildDoses(){
+  const doses=[]; let t=state.doseTime;
+  while(t<72){ doses.push(t); if(state.split) doses.push(t+8); t+=state.interval; }
+  return doses;
+}
+function drawHepcidin(){
+  const doses = buildDoses();
+  const x0=34,x1=470,y0=170,y1=10;
+  let d='';
+  for(let t=0;t<=72;t+=1){
+    const v=hepcidinAt(t,doses);
+    const x=x0+(x1-x0)*(t/72);
+    d += (t===0?'M':'L')+x.toFixed(1)+','+(y0-(v*(y0-y1))).toFixed(1)+' ';
+  }
+  $('hepPath').setAttribute('d', d);
+  $('doseMarkers').innerHTML = doses.filter(t=>t<=72).map(t=>{
+    const x=x0+(x1-x0)*(t/72);
+    return `<line x1="${x.toFixed(1)}" y1="10" x2="${x.toFixed(1)}" y2="170" stroke="#DEEBE7" stroke-width="6" opacity=".5"/>`;
+  }).join('');
+  $('hepNote').textContent = state.interval===48 ? 'Ikkuna ehtii avautua kokonaan' : (state.split ? 'Annokset kohtaavat toisiaan' : 'Ikkuna avautuu osittain');
+}
+
+// ---- diagram 2: score ----
+function computeScore(){
+  if(state.mode === 'iv'){
+    let s = 92 - (state.severity-1)*6; // slightly lower ceiling for severe cases (utilisation), still high
+    return Math.max(78, Math.min(97, Math.round(s)));
+  }
+  let s = 50;
+  s += (Math.min(state.calciumGap,2)/2)*22 - 11;
+  s += state.caffeine ? -14 : 6;
+  s += state.vitc ? 3 : 0;
+  s += state.tannin ? -12 : 4;
+  s += (state.hemeFreq/7)*16;
+  s += state.interval===48 ? 13 : 0;
+  s += state.split ? -10 : 0;
+  if(state.malabs) s *= 0.55;
+  s *= (state.adherence/100);
+  return Math.max(4, Math.min(94, Math.round(s)));
+}
+function drawScore(){
+  const s = computeScore();
+  $('scoreFill').style.width = s+'%';
+  $('scoreNum').textContent = s;
+  $('scoreWord').textContent = s<35?'Heikko':s<65?'Kohtalainen':'Hyvä';
+
+  const notes = [];
+  if(state.mode==='iv'){
+    notes.push('IV-rauta ohittaa suoliston hepsidiiniportin — arjen ruokailuajoitus ei vaikuta imeytymiseen');
+    if(state.severity>1) notes.push('Vaikeampi lähtötilanne voi silti hidastaa kudosten kokonaisvastetta hieman');
+  } else {
+    if(state.calciumGap<2) notes.push('Kalsium liian lähellä annosta heikentää imeytymistä');
+    else notes.push('Kalsium hyvin ajoitettu erilleen');
+    if(state.caffeine) notes.push('Kahvi/tee lähellä annosta heikentää imeytymistä');
+    if(state.tannin) notes.push('Tanniinit heikentävät imeytymistä merkittävästi');
+    if(state.interval===48) notes.push('Joka toinen päivä -annostelu parantaa kokonaisimeytymistä (Stoffel ym.)');
+    if(state.split) notes.push('Jaettu annos ei paranna imeytymistä');
+    if(state.malabs) notes.push('Imeytymishäiriö heikentää suun kautta otetun raudan tehoa merkittävästi — tyypillinen peruste harkita IV-rautaa');
+    if(state.adherence<80) notes.push('Epäsäännöllinen ottaminen hidastaa kokonaistulosta huomattavasti');
+  }
+  $('scoreBreak').innerHTML = notes.map(n=>'• '+n).join('<br>');
+  return s;
+}
+
+// ---- diagram 3: 12-week trend ----
+function drawTrend(score){
+  const x0=40,x1=880,y0=190,y1=10;
+  let dHb='', dFer='';
+  const sev = state.severity; // 0.7 mild .. 1.4 severe (bigger gap to close)
+  if(state.mode==='iv'){
+    // fast Hb rise (2-3 wks), ferritin overshoot-and-settle
+    const kHb = 0.55/sev;
+    for(let w=0; w<=12; w+=0.2){
+      const hb = 1-Math.exp(-kHb*w);
+      const ferBase = 1-Math.exp(-0.9*w);
+      const overshoot = 0.35*Math.exp(-w/1.3);
+      const fer = Math.min(1.28, ferBase*0.95 + overshoot);
+      const x=x0+(x1-x0)*(w/12);
+      dHb += (w===0?'M':'L')+x.toFixed(1)+','+(y0-hb*(y0-y1)*0.92).toFixed(1)+' ';
+      dFer += (w===0?'M':'L')+x.toFixed(1)+','+(y0-Math.min(fer,1)*(y0-y1)*0.92 - Math.max(0,fer-1)*(y0-y1)*0.25).toFixed(1)+' ';
+    }
+  } else {
+    const k = (0.12 + (score/100)*0.42) / sev;
+    const kf = (0.045 + (score/100)*0.16) / sev;
+    for(let w=0; w<=12; w+=0.25){
+      const hb = 1-Math.exp(-k*w);
+      const fer = 1-Math.exp(-kf*w);
+      const x=x0+(x1-x0)*(w/12);
+      dHb += (w===0?'M':'L')+x.toFixed(1)+','+(y0-hb*(y0-y1)*0.92).toFixed(1)+' ';
+      dFer += (w===0?'M':'L')+x.toFixed(1)+','+(y0-fer*(y0-y1)*0.92).toFixed(1)+' ';
+    }
+  }
+  $('hbPath').setAttribute('d', dHb);
+  $('ferPath').setAttribute('d', dFer);
+}
+
+function interdepMessage(score){
+  const parts = [`Nykyisillä valinnoilla imeytymis-/saatavuuspotentiaali on <b>${score}/100</b>.`];
+  if(state.mode==='iv'){
+    parts.push('IV-rauta tuottaa nopeamman ja tasaisemman vasteen riippumatta arjen ruokailuajoituksesta — hintana kliininen käynti, valvonta ja pieni reaktioriski. Tämä on syy, miksi se on varattu tilanteisiin, joissa suun kautta otettu rauta ei riitä tai ei toimi (ks. kohta 4).');
+  } else if(state.malabs){
+    parts.push('Imeytymishäiriö rajoittaa suun kautta otetun raudan tehoa riippumatta ajoituksesta tai ruokavaliosta — tämä on tyypillinen tilanne, jossa IV-rauta muuttuu fysiologisesti perustelluksi vaihtoehdoksi.');
+  } else if(state.interval===48 && state.calciumGap>=2 && !state.caffeine && state.adherence>=85){
+    parts.push('Tämä yhdistelmä — joka toinen päivä, kalsium erillään, ei kofeiinia lähellä, hyvä sitoutuminen — vastaa fysiologisesti parasta tunnettua oraalista strategiaa.');
+  } else {
+    parts.push('Kokeile vaihtaa hoitomuotoa tai yksittäisiä arjen tekijöitä nähdäksesi, miten ne vahvistavat tai kumoavat toisiaan — ja missä kohdassa oraalinen hoito alkaa olla riittämätön.');
+  }
+  $('interdepText').innerHTML = parts.join(' ');
+}
+
+function render(){
+  drawHepcidin();
+  const s = drawScore();
+  drawTrend(s);
+  interdepMessage(s);
+}
+updateVisibility();
+render();
+</script>
+
+</body>
+</html>
